@@ -8,6 +8,7 @@ filter_data_fname = os.path.join(wsynphot.__path__[0], 'data', 'filter_data.h5')
 from pandas import HDFStore
 from astropy import units as u, constants as const
 import numpy as np
+from calibration import get_vega
 
 def calculate_filter_f_lambda(spectrum, filter):
     """
@@ -25,6 +26,25 @@ def calculate_filter_f_lambda(spectrum, filter):
 
     :return:
     """
+
+    filtered_spectrum = filter * spectrum
+
+    return np.trapz(filtered_spectrum.flux, filtered_spectrum.wavelength)
+
+def calculate_vega_magnitude(spectrum, filter):
+    filtered_f_lambda = (calculate_filter_f_lambda(spectrum, filter) /
+                         filter.calculate_integral_wavelength())
+
+    return -2.5 * np.log10(filtered_f_lambda / filter.zp_vega_f_lambda)
+
+
+
+def calculate_ab_magnitude(spectrum, filter):
+    filtered_f_lambda = (calculate_filter_f_lambda(spectrum, filter) /
+                         filter.calculate_integral_wavelength())
+
+    return -2.5 * np.log10(filtered_f_lambda / filter.zp_vega_f_lambda)
+
 
 class BaseFilterCurve(object):
     """
@@ -81,6 +101,8 @@ class BaseFilterCurve(object):
                 
             if 'gemini' in filter_name:
                 wavelength_unit = 'nm'
+            elif 'bessell' in filter_name:
+                wavelength_unit = 'angstrom'
 
             if wavelength_unit is None:
                 raise ValueError('No "wavelength_unit" given and none '
@@ -88,7 +110,8 @@ class BaseFilterCurve(object):
 
             wavelength = filter.wavelength.values * u.Unit(wavelength_unit)
 
-            return cls(wavelength, filter.transmission)
+            return cls(wavelength, filter.transmission_lambda,
+                       interpolation_kind=interpolation_kind)
 
     def __init__(self, wavelength, transmission_lambda, interpolation_kind='linear'):
         if not hasattr(wavelength, 'unit'):
@@ -111,6 +134,8 @@ class BaseFilterCurve(object):
 
         return Spectrum1D(transmission * other.flux, wcs=other.wcs)
 
+    def __rmul__(self, other):
+        return self.__mul__(other)
 
     @property
     def lambda_pivot(self):
@@ -136,7 +161,9 @@ class BaseFilterCurve(object):
 
     @property
     def zp_vega_f_lambda(self):
-        pass
+        return (calculate_filter_f_lambda(get_vega(), self) /
+                self.calculate_integral_wavelength())
+
 
     def interpolate(self, wavelength):
         """
@@ -161,5 +188,24 @@ class BaseFilterCurve(object):
 
         return np.trapz(self.transmission_lambda, self.wavelength)
 
+    def calculate_vega_magnitude(self, spectrum):
+        __doc__ = calculate_vega_magnitude.__doc__
+        return calculate_vega_magnitude(spectrum, self)
+
+
 class FilterCurve(BaseFilterCurve):
     pass
+
+class FilterSet(object):
+
+    @classmethod
+    def load_filter_set(cls, filter_set_names):
+        """
+        A list of filters to be loaded
+
+        filter_set_names: list of strings
+        """
+
+
+    def __init__(self, filter_set, ):
+        self.filter_set =

@@ -6,9 +6,9 @@ import pandas as pd
 import os
 from glob import glob
 
-def read_gemini_filter(fname):
+def read_sdss_filter(fname):
     """
-    Reading the gemini filter file into a dataframe
+    Reading the bessell filter file into a dataframe
 
     Parameters
     ----------
@@ -18,14 +18,7 @@ def read_gemini_filter(fname):
 
     """
 
-    for i, line in enumerate(open(fname)):
-        if line.strip()[1:].strip().startswith('lambda'):
-            skiprows = i
-            break
-    else:
-        raise ValueError('File {0} not formatted in Gemini style'.format(fname))
-
-    data = pd.DataFrame(genfromtxt(fname, skip_header=skiprows),
+    data = pd.DataFrame(genfromtxt(fname, usecols=(0, 1)),
                         columns=['wavelength', 'transmission_lambda'])
 
     return data
@@ -60,27 +53,16 @@ def read_dataset(fname_list, prefix, name_parser=None):
 
         filter_path = os.path.join(prefix, filter_name)
 
-        filter_dict[filter_path] = read_gemini_filter(fname)
+        filter_dict[filter_path] = read_sdss_filter(fname)
 
     return filter_dict
 
 
 
-def read_all_gemini():
-    gmos_s_nameparser = (lambda fname: os.path.basename(fname).replace(
-        'gmos_s_', '').replace('.txt', ''))
-    gmos_filters = read_dataset(glob('gmoss/*.txt'), 'gemini/gmoss',
-                          gmos_s_nameparser)
-
-
-    gmos_n_nameparser = (lambda fname: os.path.basename(fname).replace(
-        'gmos_n_', '').replace('.txt', ''))
-    gmos_n = read_dataset(glob('gmosn/*.txt'), 'gemini/gmosn',
-                          gmos_n_nameparser)
-
-    gmos_filters.update(gmos_n)
-
-    return gmos_filters
+def read_all_sdss():
+    nameparser = (lambda fname: os.path.basename(fname).replace('.dat', ''))
+    return read_dataset(glob('*.dat'), 'sdss',
+                          nameparser)
 
 def save_to_hdf(filter_dict, hdf_file, mode='a'):
 
