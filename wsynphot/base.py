@@ -10,7 +10,7 @@ from astropy import units as u, constants as const
 import numpy as np
 from calibration import get_vega
 
-def calculate_filter_f_lambda(spectrum, filter):
+def calculate_filter_flux_density(spectrum, filter):
     """
     Calculate the average flux through the filter by evaluating the integral
 
@@ -32,18 +32,18 @@ def calculate_filter_f_lambda(spectrum, filter):
     return np.trapz(filtered_spectrum.flux, filtered_spectrum.wavelength)
 
 def calculate_vega_magnitude(spectrum, filter):
-    filtered_f_lambda = (calculate_filter_f_lambda(spectrum, filter) /
-                         filter.calculate_integral_wavelength())
+    filtered_f_lambda = (calculate_filter_flux_density(spectrum, filter) /
+                         filter.calculate_wavelength_delta())
 
     return -2.5 * np.log10(filtered_f_lambda / filter.zp_vega_f_lambda)
 
 
 
 def calculate_ab_magnitude(spectrum, filter):
-    filtered_f_lambda = (calculate_filter_f_lambda(spectrum, filter) /
-                         filter.calculate_integral_wavelength())
+    filtered_f_lambda = (calculate_filter_flux_density(spectrum, filter) /
+                         filter.calculate_wavelength_delta())
 
-    return -2.5 * np.log10(filtered_f_lambda / filter.zp_vega_f_lambda)
+    return -2.5 * np.log10(filtered_f_lambda / filter.zp_ab_f_lambda)
 
 
 class BaseFilterCurve(object):
@@ -104,16 +104,21 @@ class BaseFilterCurve(object):
             elif 'bessell' in filter_name:
                 wavelength_unit = 'angstrom'
 
+            elif 'sdss' in filter_name:
+                wavelength_unit = 'angstrom'
+
             if wavelength_unit is None:
                 raise ValueError('No "wavelength_unit" given and none '
                                  'autodetected')
 
             wavelength = filter.wavelength.values * u.Unit(wavelength_unit)
 
-            return cls(wavelength, filter.transmission_lambda,
-                       interpolation_kind=interpolation_kind)
+            return cls(wavelength, filter.transmission_lambda.values,
+                       interpolation_kind=interpolation_kind,
+                       filter_name=filter_name)
 
-    def __init__(self, wavelength, transmission_lambda, interpolation_kind='linear'):
+    def __init__(self, wavelength, transmission_lambda,
+                 interpolation_kind='linear', filter_name=None):
         if not hasattr(wavelength, 'unit'):
             raise ValueError('the wavelength needs to be a astropy quantity')
         self.wavelength = wavelength
@@ -124,29 +129,47 @@ class BaseFilterCurve(object):
                                                          kind=interpolation_kind,
                                                          bounds_error=False,
                                                          fill_value=0.0)
+        self.filter_name = filter_name
 
 
     def __mul__(self, other):
         if not hasattr(other, 'flux') or not hasattr(other, 'wavelength'):
             raise ValueError('requiring a specutils.Spectrum1D-like object that'
                              'has attributes "flux" and "wavelength"')
+
+        #new_wavelength = np.union1d(other.wavelength.to(self.wavelength.unit).value,
+        #                            self.wavelength.value) * self.wavelength.unit
         transmission = self.interpolate(other.wavelength)
 
-        return Spectrum1D(transmission * other.flux, wcs=other.wcs)
+        return Spectrum1D.from_array(other.wavelength, transmission * other.flux)
 
     def __rmul__(self, other):
         return self.__mul__(other)
+
 
     @property
     def lambda_pivot(self):
         """
         Calculate the pivotal wavelength as defined in Bessell & Murphy 2012
 
-        ..math::`$<f_\nu> = <f_\lambda>\frac{\lambda_\textrm{pivot}^2}{c}$`
+        .. math::
+
+            \\lambda_\\textrm{pivot} = \\sqrt{
+            \\frac{\\int S(\\lambda)\\lambda d\\lambda}{\\int \\frac{S(\\lambda)}{\\lambda}}}\\\\
+            <f_\\nu> = <f_\\lambda>\\frac{\\lambda_\\textrm{pivot}^2}{c}
         """
 
-        return np.sqrt((np.trapz(self.transmission_lambda * self.wavelength)/
-                (np.trapz(self.transmission_lambda / self.wavelength))))
+        return np.sqrt((np.trapz(self.transmission_lambda * self.wavelength, self.wavelength)/
+                (np.trapz(self.transmission_lambda / self.wavelength, self.wavelength))))
+
+    @property
+    def wavelength_start(self):
+        return self.wavelength[self.transmission_lambda > 0.][0]
+
+
+    @property
+    def wavelength_end(self):
+        return self.wavelength[self.transmission_lambda > 0.][-1]
 
     @property
     def zp_ab_f_lambda(self):
@@ -161,8 +184,8 @@ class BaseFilterCurve(object):
 
     @property
     def zp_vega_f_lambda(self):
-        return (calculate_filter_f_lambda(get_vega(), self) /
-                self.calculate_integral_wavelength())
+        return (calculate_filter_flux_density(get_vega(), self) /
+                self.calculate_wavelength_delta())
 
 
     def interpolate(self, wavelength):
@@ -180,7 +203,16 @@ class BaseFilterCurve(object):
         converted_wavelength = wavelength.to(self.wavelength.unit)
         return self.interpolation_object(converted_wavelength)
 
-    def calculate_integral_wavelength(self):
+
+    def calculate_flux_density(self, spectrum):
+        return calculate_filter_flux_density(spectrum, self)
+
+
+    def calculate_f_lambda(self, spectrum):
+        return (self.calculate_flux_density(spectrum) /
+                self.calculate_wavelength_delta())
+
+    def calculate_wavelength_delta(self):
         """
         Calculate the Integral :math:`\integral
         :return:
@@ -188,24 +220,188 @@ class BaseFilterCurve(object):
 
         return np.trapz(self.transmission_lambda, self.wavelength)
 
+    def calculate_weighted_average_wavelength(self):
+        """
+        Calculate integral :math:`\\frac{\\int S(\\lambda) \\lambda d\\lambda}{\\int S(\\lambda) d\\lambda}`
+
+
+        Returns
+            : ~astropy.units.Quantity
+
+
+        """
+
+        return (np.trapz(self.transmission_lambda * self.wavelength,
+                         self.wavelength) / self.calculate_wavelength_delta())
+
     def calculate_vega_magnitude(self, spectrum):
         __doc__ = calculate_vega_magnitude.__doc__
         return calculate_vega_magnitude(spectrum, self)
 
+    def calculate_ab_magnitude(self, spectrum):
+        __doc__ = calculate_ab_magnitude.__doc__
+        return calculate_ab_magnitude(spectrum, self)
+
+    def convert_ab_magnitude_to_f_lambda(self, mag):
+        return 10**(-0.4*mag) * self.zp_ab_f_lambda
+
+    def convert_vega_magnitude_to_f_lambda(self, mag):
+        return 10**(-0.4*mag) * self.zp_vega_f_lambda
+
+    def plot(self, ax, scale_max=None, make_label=True):
+        if scale_max is not None:
+            if hasattr(scale_max, 'unit'):
+                scale_max = scale_max.value
+
+            transmission = (self.transmission_lambda * scale_max
+                            / self.transmission_lambda.max())
+        else:
+            transmission = self.transmission_lambda
+
+        ax.plot(self.wavelength, transmission)
+
+        if make_label==True and self.filter_name is not None:
+            text_x = (self.lambda_pivot).value
+            text_y = transmission.max()/2
+            ax.text(text_x, text_y, self.filter_name,
+                    horizontalalignment='center', verticalalignment='center')
+
 
 class FilterCurve(BaseFilterCurve):
-    pass
+    def __repr__(self):
+        if self.filter_name is None:
+            filter_name = "{0:x}".format(self.__hash__())
+        else:
+            filter_name = self.filter_name
+        return "FilterCurve <{0}>".format(filter_name)
+
 
 class FilterSet(object):
 
-    @classmethod
-    def load_filter_set(cls, filter_set_names):
-        """
-        A list of filters to be loaded
+    """
+    A set of filters
 
-        filter_set_names: list of strings
-        """
+    Parameters
+    ----------
+
+    filter_set: ~list
+        a list of strings or a list of filters
+
+    interpolation_kind: ~str
+        scipy interpolaton kinds
+
+    """
+    def __init__(self, filter_set, interpolation_kind='linear'):
+
+        if hasattr(filter_set[0], 'wavelength'):
+            self.filter_set = filter_set
+        else:
+            self.filter_set = [FilterCurve.load_filter(filter_name,
+                                              interpolation_kind=
+                                              interpolation_kind)
+                      for filter_name in filter_set]
 
 
-    def __init__(self, filter_set, ):
-        self.filter_set =
+
+    def __iter__(self):
+        self.current_filter_idx = 0
+        return self
+
+    def __next__(self):
+        try:
+            item = self.filter_set[self.current_filter_idx]
+        except IndexError:
+            raise StopIteration
+
+        self.current_filter_idx += 1
+        return item
+    next = __next__
+
+
+    def __getitem__(self, item):
+        return self.filter_set.__getitem__(item)
+
+    def calculate_ab_magnitudes(self, spectrum):
+        mags = [item.calculate_ab_magnitude(spectrum)
+                for item in self.filter_set]
+        return mags
+
+    def calculate_vega_magnitudes(self, spectrum):
+        mags = [item.calculate_vega_magnitude(spectrum)
+                for item in self.filter_set]
+        return mags
+
+    def convert_ab_magnitudes_to_f_lambda(self, magnitudes):
+        if len(magnitudes) != len(self.filter_set):
+            raise ValueError("Filter set and magnitudes need to have the same "
+                             "number of items")
+        f_lambdas = [filter.convert_ab_magnitude_to_f_lambda(mag)
+                     for filter, mag in zip(self.filter_set, magnitudes)]
+        return u.Quantity(f_lambdas)
+
+
+    def convert_ab_magnitude_uncertainties_to_f_lambda_uncertainties(
+            self, magnitudes, magnitude_uncertainties):
+
+        if len(magnitudes) != len(self.filter_set):
+            raise ValueError("Filter set and magnitudes need to have the same "
+                             "number of items")
+        f_lambda_positive_uncertainties = u.Quantity(
+            [filter.convert_ab_magnitude_to_f_lambda(mag +  mag_uncertainty)
+                     for filter, mag, mag_uncertainty in zip(
+                self.filter_set, magnitudes, magnitude_uncertainties, )])
+
+        f_lambda_negative_uncertainties = u.Quantity(
+            [filter.convert_ab_magnitude_to_f_lambda(mag -  mag_uncertainty)
+                     for filter, mag, mag_uncertainty in zip(
+                self.filter_set, magnitudes, magnitude_uncertainties)])
+
+        return np.abs(u.Quantity((f_lambda_positive_uncertainties,
+                f_lambda_negative_uncertainties))
+                      -  self.convert_ab_magnitudes_to_f_lambda(magnitudes))
+
+    def convert_vega_magnitude_uncertainties_to_f_lambda_uncertainties(
+            self, magnitudes, magnitude_uncertainties):
+
+        if len(magnitudes) != len(self.filter_set):
+            raise ValueError("Filter set and magnitudes need to have the same "
+                             "number of items")
+        f_lambda_positive_uncertainties = u.Quantity(
+            [filter.convert_vega_magnitude_to_f_lambda(mag +  mag_uncertainty)
+                     for filter, mag, mag_uncertainty in zip(
+                self.filter_set, magnitudes, magnitude_uncertainties, )])
+
+        f_lambda_negative_uncertainties = u.Quantity(
+            [filter.convert_vega_magnitude_to_f_lambda(mag -  mag_uncertainty)
+                     for filter, mag, mag_uncertainty in zip(
+                self.filter_set, magnitudes, magnitude_uncertainties)])
+
+        return np.abs(u.Quantity((f_lambda_positive_uncertainties,
+                                  f_lambda_negative_uncertainties))
+                      -  self.convert_vega_magnitudes_to_f_lambda(magnitudes))
+
+
+    def convert_vega_magnitudes_to_f_lambda(self, magnitudes):
+        if len(magnitudes) != len(self.filter_set):
+            raise ValueError("Filter set and magnitudes need to have the same "
+                             "number of items")
+        f_lambdas = [filter.convert_vega_magnitude_to_f_lambda(mag)
+                     for filter, mag in zip(self.filter_set, magnitudes)]
+        return u.Quantity(f_lambdas)
+
+    def plot_spectrum(self, spectrum, ax, make_labels=True):
+        ax.plot(spectrum.wavelength, spectrum.flux)
+        for filter in self.filter_set:
+            filter_scale = filter.calculate_f_lambda(spectrum)
+            filter.plot(ax, scale_max=filter_scale, make_label=make_labels)
+
+
+
+class MagnitudeSet(FilterSet):
+    def __init__(self, filter_set, magnitudes, magnitude_uncertainties=None,
+                 interpolation_kind='linear'):
+        super(MagnitudeSet, self).__init__(filter_set,
+                                           interpolation_kind=
+                                           interpolation_kind)
+        self.magnitudes = magnitudes
+        self.magnitude_uncertainties = magnitude_uncertainties
