@@ -1,5 +1,7 @@
-Documentation
-=============
+********
+wsynphot
+********
+
 
 This is an affiliated package for the AstroPy package. The documentation for
 this package is here:
@@ -9,5 +11,7 @@ this package is here:
 
   packagename/index.rst
 
-.. note:: Do not edit this page - instead, place all documentation for the
-          affiliated package inside ``packagename/``
+Reference/API
+=============
+
+.. automodapi:: wsynphot
