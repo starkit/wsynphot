@@ -104,6 +104,9 @@ class BaseFilterCurve(object):
             elif 'bessell' in filter_name:
                 wavelength_unit = 'angstrom'
 
+            elif 'hst' in filter_name:
+                wavelength_unit = 'angstrom'
+
             elif 'sdss' in filter_name:
                 wavelength_unit = 'angstrom'
 
@@ -164,12 +167,12 @@ class BaseFilterCurve(object):
 
     @property
     def wavelength_start(self):
-        return self.wavelength[self.transmission_lambda > 0.][0]
+        return self.get_wavelength_start()
 
 
     @property
     def wavelength_end(self):
-        return self.wavelength[self.transmission_lambda > 0.][-1]
+        return self.get_wavelength_end()
 
     @property
     def zp_ab_f_lambda(self):
@@ -248,7 +251,8 @@ class BaseFilterCurve(object):
     def convert_vega_magnitude_to_f_lambda(self, mag):
         return 10**(-0.4*mag) * self.zp_vega_f_lambda
 
-    def plot(self, ax, scale_max=None, make_label=True):
+    def plot(self, ax, scale_max=None, make_label=True, plot_kwargs={},
+             format_filter_name=None):
         if scale_max is not None:
             if hasattr(scale_max, 'unit'):
                 scale_max = scale_max.value
@@ -258,13 +262,28 @@ class BaseFilterCurve(object):
         else:
             transmission = self.transmission_lambda
 
-        ax.plot(self.wavelength, transmission)
+        ax.plot(self.wavelength, transmission, **plot_kwargs)
 
         if make_label==True and self.filter_name is not None:
+            if format_filter_name is not None:
+                filter_name = format_filter_name(self.filter_name)
+            else:
+                filter_name = self.filter_name
             text_x = (self.lambda_pivot).value
             text_y = transmission.max()/2
-            ax.text(text_x, text_y, self.filter_name,
-                    horizontalalignment='center', verticalalignment='center')
+            ax.text(text_x, text_y, filter_name,
+                    horizontalalignment='center', verticalalignment='center',
+                    bbox=dict(facecolor='white', alpha=0.5))
+    def get_wavelength_start(self, threshold=0.01):
+        norm_cum_sum = (np.cumsum(self.transmission_lambda)
+                        / np.sum(self.transmission_lambda))
+        return self.wavelength[norm_cum_sum.searchsorted(threshold)]
+
+    def get_wavelength_end(self, threshold=0.01):
+        norm_cum_sum = (np.cumsum(self.transmission_lambda)
+                        / np.sum(self.transmission_lambda))
+        return self.wavelength[norm_cum_sum.searchsorted(1 - threshold)]
+
 
 
 class FilterCurve(BaseFilterCurve):
@@ -389,11 +408,24 @@ class FilterSet(object):
                      for filter, mag in zip(self.filter_set, magnitudes)]
         return u.Quantity(f_lambdas)
 
-    def plot_spectrum(self, spectrum, ax, make_labels=True):
-        ax.plot(spectrum.wavelength, spectrum.flux)
-        for filter in self.filter_set:
+    def plot_spectrum(self, spectrum, ax, make_labels=True,
+                      spectrum_plot_kwargs={}, filter_plot_kwargs={},
+                      filter_color_list=None, format_filter_name=None):
+        """
+        plot a spectrum with the given filters
+        spectrum:
+        ax:
+        make_labels:
+        :return:
+        """
+        ax.plot(spectrum.wavelength, spectrum.flux, **spectrum_plot_kwargs)
+        for i, filter in enumerate(self.filter_set):
             filter_scale = filter.calculate_f_lambda(spectrum)
-            filter.plot(ax, scale_max=filter_scale, make_label=make_labels)
+            if filter_color_list is not None:
+                filter_plot_kwargs['color'] = filter_color_list[i]
+            filter.plot(ax, scale_max=filter_scale, make_label=make_labels,
+                        plot_kwargs=filter_plot_kwargs,
+                        format_filter_name=format_filter_name)
 
 
 
@@ -403,5 +435,5 @@ class MagnitudeSet(FilterSet):
         super(MagnitudeSet, self).__init__(filter_set,
                                            interpolation_kind=
                                            interpolation_kind)
-        self.magnitudes = magnitudes
-        self.magnitude_uncertainties = magnitude_uncertainties
+        self.magnitudes = np.array(magnitudes)
+        self.magnitude_uncertainties = np.array(magnitude_uncertainties)
