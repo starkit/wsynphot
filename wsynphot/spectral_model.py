@@ -100,17 +100,15 @@ class MagnitudeSpectralModel(SpectralModel):
 
         if end_point_flux is not None:
             start_filter = magnitude_set[0]
-            start_wavelength = (start_filter.
-                                wavelength[start_filter.transmission_lambda>0][0])
+            start_wavelength = start_filter.wavelength_start
 
             end_filter = magnitude_set[-1]
-            end_wavelength = (end_filter.
-                                wavelength[end_filter.transmission_lambda>0][-1])
+            end_wavelength = end_filter.wavelength_end
 
             wavelength = ([start_wavelength.to(wavelength.unit).value] +
-                          wavelength.tolist() +
+                          wavelength.value.tolist() +
                           [end_wavelength.to(wavelength.unit).value]) * wavelength.unit
-            flux = ([u.Quantity(end_point_flux, flux.unit).value] + flux.tolist()
+            flux = ([u.Quantity(end_point_flux, flux.unit).value] + flux.value.tolist()
                     + [u.Quantity(end_point_flux, flux.unit).value]) * flux.unit
 
 
