@@ -7,8 +7,13 @@ import os
 filter_data_fname = os.path.join(wsynphot.__path__[0], 'data', 'filter_data.h5')
 from pandas import HDFStore
 from astropy import units as u, constants as const
+
+from astropy import utils
 import numpy as np
 from calibration import get_vega
+
+def _calculate_filter_flux_density(flux, filter):
+    pass
 
 def calculate_filter_flux_density(spectrum, filter):
     """
@@ -31,11 +36,15 @@ def calculate_filter_flux_density(spectrum, filter):
 
     return np.trapz(filtered_spectrum.flux, filtered_spectrum.wavelength)
 
-def calculate_vega_magnitude(spectrum, filter):
-    filtered_f_lambda = (calculate_filter_flux_density(spectrum, filter) /
-                         filter.calculate_wavelength_delta())
 
-    return -2.5 * np.log10(filtered_f_lambda / filter.zp_vega_f_lambda)
+def calculate_vega_magnitude(spectrum, filter):
+    filter_flux_density = calculate_filter_flux_density(spectrum, filter)
+    wavelength_delta = filter.calculate_wavelength_delta()
+    filtered_f_lambda = (filter_flux_density / wavelength_delta)
+
+    zp_vega_f_lambda = filter.zp_vega_f_lambda
+
+    return -2.5 * np.log10(filtered_f_lambda / zp_vega_f_lambda)
 
 
 
@@ -150,7 +159,7 @@ class BaseFilterCurve(object):
         return self.__mul__(other)
 
 
-    @property
+    @utils.lazyproperty
     def lambda_pivot(self):
         """
         Calculate the pivotal wavelength as defined in Bessell & Murphy 2012
@@ -165,27 +174,27 @@ class BaseFilterCurve(object):
         return np.sqrt((np.trapz(self.transmission_lambda * self.wavelength, self.wavelength)/
                 (np.trapz(self.transmission_lambda / self.wavelength, self.wavelength))))
 
-    @property
+    @utils.lazyproperty
     def wavelength_start(self):
         return self.get_wavelength_start()
 
 
-    @property
+    @utils.lazyproperty
     def wavelength_end(self):
         return self.get_wavelength_end()
 
-    @property
+    @utils.lazyproperty
     def zp_ab_f_lambda(self):
         return (self.zp_ab_f_nu * const.c / self.lambda_pivot**2).to(
             'erg/s/cm^2/Angstrom', u.spectral())
 
-    @property
+    @utils.lazyproperty
     def zp_ab_f_nu(self):
         return (3631 * u.Jy).to('erg/s/cm^2/Hz')
 
 
 
-    @property
+    @utils.lazyproperty
     def zp_vega_f_lambda(self):
         return (calculate_filter_flux_density(get_vega(), self) /
                 self.calculate_wavelength_delta())
@@ -206,6 +215,8 @@ class BaseFilterCurve(object):
         converted_wavelength = wavelength.to(self.wavelength.unit)
         return self.interpolation_object(converted_wavelength)
 
+    def _calculuate_flux_density(self, wavelength, flux):
+        return _calculcate_filter_flux_density(flux, self)
 
     def calculate_flux_density(self, spectrum):
         return calculate_filter_flux_density(spectrum, self)
@@ -295,6 +306,8 @@ class FilterCurve(BaseFilterCurve):
         return "FilterCurve <{0}>".format(filter_name)
 
 
+
+
 class FilterSet(object):
 
     """
@@ -339,6 +352,13 @@ class FilterSet(object):
 
     def __getitem__(self, item):
         return self.filter_set.__getitem__(item)
+
+    def __repr__(self):
+        return "<{0} \n{1}>".format(self.__class__.__name__,
+                                    '\n'.join(
+                                        [item.filter_name
+                                         for item in self.filter_set]))
+
 
     def calculate_ab_magnitudes(self, spectrum):
         mags = [item.calculate_ab_magnitude(spectrum)
@@ -437,3 +457,15 @@ class MagnitudeSet(FilterSet):
                                            interpolation_kind)
         self.magnitudes = np.array(magnitudes)
         self.magnitude_uncertainties = np.array(magnitude_uncertainties)
+
+    def __repr__(self):
+        mag_str = '{0} {1:.4f} +/- {2:.4f}'
+        mag_data = []
+        for i, filter in enumerate(self.filter_set):
+            unc = (np.nan if self.magnitude_uncertainties is None
+                   else self.magnitude_uncertainties[i])
+            mag_data.append(mag_str.format(filter.filter_name,
+                                           self.magnitudes[i], unc))
+
+        return "<{0} \n{1}>".format(self.__class__.__name__,
+                                    '\n'.join(mag_data))
