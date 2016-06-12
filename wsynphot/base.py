@@ -359,6 +359,9 @@ class FilterSet(object):
                                         [item.filter_name
                                          for item in self.filter_set]))
 
+    def calculate_f_lambda(self, spectrum):
+        return u.Quantity(
+            [item.calculate_f_lambda(spectrum) for item in self.filter_set])
 
     def calculate_ab_magnitudes(self, spectrum):
         mags = [item.calculate_ab_magnitude(spectrum)
