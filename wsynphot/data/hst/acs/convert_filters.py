@@ -1,4 +1,4 @@
-#Reading Gemini GMOS filters
+#Reading HST ACS filters
 
 from astropy import units as u, constants as const
 from numpy import genfromtxt, asscalar
@@ -18,22 +18,11 @@ def read_hst_filter(fname):
 
     """
 
-    for i, line in enumerate(open(fname)):
-        if line.strip().startswith('1'):
-            skiprows = i - 1
-            break
-    else:
-        raise ValueError('File {0} not formatted in Gemini style'.format(fname))
 
-    data = pd.DataFrame(genfromtxt(fname, skip_header=skiprows, usecols=(1, 2)),
+    data = pd.DataFrame(genfromtxt(fname, usecols=(0, 1)),
                         columns=['wavelength', 'transmission_lambda'])
 
-    start_filter_idx = asscalar(
-        (data.transmission_lambda > 0).searchsorted(1) - 1)
-    end_filter_idx = (data.transmission_lambda > 0)[::-1].searchsorted(1)
-    end_filter_idx = asscalar((len(data) - end_filter_idx) + 1)
-
-    return data.iloc[start_filter_idx:end_filter_idx]
+    return data
 
 
 def read_dataset(fname_list, prefix, name_parser=None):
@@ -72,19 +61,11 @@ def read_dataset(fname_list, prefix, name_parser=None):
 
 
 def read_all_hst():
-    hst_nameparser = (lambda fname:
-                      '_'.join(os.path.basename(fname).lower().split('.')[:2]))
-    hst_filters = read_dataset(glob('filter_data/*.tab'), 'hst/wfc3',
+    hst_nameparser = (
+        lambda fname: os.path.basename(
+            fname).lower().split('_')[1].replace('.dat', ''))
+    hst_filters = read_dataset(glob('filter_data/*.dat'), 'hst/acs/wfc',
                           hst_nameparser)
-
-    #rewriting hst_filters dict keys:
-
-    for key, value in hst_filters.items():
-        del hst_filters[key]
-        long_fname = key.split('/')[-1]
-        filter_name, band = long_fname.split('_')
-        new_key = '/'.join(key.split('/')[:-1] + [band, filter_name])
-        hst_filters[new_key] = value
 
 
     return hst_filters
