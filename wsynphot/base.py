@@ -34,8 +34,9 @@ def calculate_filter_flux_density(spectrum, filter):
 
     filtered_spectrum = filter * spectrum
 
-    return np.trapz(filtered_spectrum.flux, filtered_spectrum.wavelength)
-
+    filter_flux_density = np.trapz(filtered_spectrum.flux * filtered_spectrum.wavelength,
+                    filtered_spectrum.wavelength)
+    return filter_flux_density
 
 def calculate_vega_magnitude(spectrum, filter):
     filter_flux_density = calculate_filter_flux_density(spectrum, filter)
@@ -232,7 +233,8 @@ class BaseFilterCurve(object):
         :return:
         """
 
-        return np.trapz(self.transmission_lambda, self.wavelength)
+        return np.trapz(self.transmission_lambda * self.wavelength,
+                        self.wavelength)
 
     def calculate_weighted_average_wavelength(self):
         """
