@@ -117,6 +117,9 @@ class BaseFilterCurve(object):
             elif 'hst' in filter_name:
                 wavelength_unit = 'angstrom'
 
+            elif 'decam' in filter_name:
+                wavelength_unit = 'angstrom'
+
             elif 'sdss' in filter_name:
                 wavelength_unit = 'angstrom'
 
@@ -360,6 +363,11 @@ class FilterSet(object):
                                     '\n'.join(
                                         [item.filter_name
                                          for item in self.filter_set]))
+
+
+    @property
+    def lambda_pivot(self):
+        return u.Quantity([item.lambda_pivot for item in self])
 
     def calculate_f_lambda(self, spectrum):
         return u.Quantity(
