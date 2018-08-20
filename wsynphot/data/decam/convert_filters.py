@@ -1,4 +1,5 @@
-#Reading Gemini GMOS filters
+#Reading DECAM filters
+# also get it from http://www.ctio.noao.edu/noao/sites/default/files/decam/asahi_ugrizy.dat
 
 from astropy import units as u, constants as const
 from numpy import genfromtxt
