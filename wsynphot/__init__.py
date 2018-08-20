@@ -14,3 +14,4 @@ from ._astropy_init import *
 if not _ASTROPY_SETUP_:
     from wsynphot.base import BaseFilterCurve, FilterCurve, FilterSet, MagnitudeSet
     from wsynphot.calibration import get_vega
+    from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
