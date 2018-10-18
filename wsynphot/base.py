@@ -1,7 +1,7 @@
 # defining the base filter curve classes
 
 from scipy import interpolate
-from specutils import Spectrum1D
+from spectrum1d import SKSpectrum1D as Spectrum1D
 import wsynphot
 import os
 filter_data_fname = os.path.join(wsynphot.__path__[0], 'data', 'filter_data.h5')
