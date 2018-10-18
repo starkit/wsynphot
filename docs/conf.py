@@ -58,6 +58,17 @@ setup_cfg = dict(conf.items('metadata'))
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
+
+
+
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
+nbsphinx_prolog = """
+The notebook is available here: 
+https://github.com/starkit/wsynphot/tree/master/docs/{{ env.doc2path(env.docname, base=None) }}
+
+----
+"""
+nbsphinx_execute = 'never'
 exclude_patterns.append('_templates')
 
 # This is added to the end of RST files - a good place to put substitutions to
@@ -72,6 +83,10 @@ project = setup_cfg['package_name']
 author = setup_cfg['author']
 copyright = '{0}, {1}'.format(
     datetime.datetime.now().year, setup_cfg['author'])
+html_theme_options = {
+    'logotext1': 'W',  # white,  semi-bold
+    'logotext2': 'Synphot',  # orange, light
+    'logotext3': ':documentation'}
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -84,6 +99,10 @@ package = sys.modules[setup_cfg['package_name']]
 version = package.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
 release = package.__version__
+extensions += [
+    'nbsphinx',
+    'sphinx.ext.mathjax',
+
 
 
 # -- Options for HTML output ---------------------------------------------------
