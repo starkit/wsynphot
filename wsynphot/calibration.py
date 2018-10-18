@@ -2,7 +2,7 @@ import wsynphot
 import os
 from astropy.io import fits
 from astropy import units as u
-from specutils import Spectrum1D
+from spectrum1d import SKSpectrum1D as Spectrum1D
 
 default_vega = 'alpha_lyr_mod_001.fits'
 
