@@ -3,8 +3,7 @@ wsynphot
 ********
 
 
-This is an affiliated package for the AstroPy package. The documentation for
-this package is here:
+This is a package for doing synthetic photometry.
 
 .. toctree::
   :maxdepth: 2
