@@ -9,7 +9,6 @@ matplotlib
 numexpr
 pytest
 pyyaml
-progressbar2
 tqdm
 coverage
 requests
