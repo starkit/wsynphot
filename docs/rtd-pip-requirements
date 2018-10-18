@@ -30,3 +30,4 @@ pandoc
 pygments
 ipython
 ipykernel
+git+https://github.com/starkit/starkit
