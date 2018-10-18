@@ -1,6 +1,6 @@
 from scipy import interpolate
 from astropy import units as u
-from specutils import Spectrum1D
+from spectrum1d import SKSpectrum1D as Spectrum1D
 
 class SpectralModel(object):
     """
