@@ -4,20 +4,14 @@ import os
 import requests
 from tqdm.autonotebook import tqdm
 
-from wsynphot import ALPHA_LYR_FNAME
-
 FILTER_DATA_PATH = os.path.join(os.path.dirname(__file__), 'filter_data.h5')
 
 DATA_TRANSMISSION_URL = ("https://zenodo.org/record/1467309/files/"
                          "filter_data.h5?download=1")
 
-ALPHA_LYR_MOD_URL= "ftp://ftp.stsci.edu/cdbs/calspec/{0}".format(
-    ALPHA_LYR_FNAME)
-
+ALPHA_LYR_FNAME = 'alpha_lyr_mod_002.fits'
 ALPHA_LYR_PATH = os.path.join(os.path.dirname(__file__), 'calibration',
                               ALPHA_LYR_FNAME)
-#CALSPEC_FILES = ['alpha_lyr_005.fits', 'alpha_lyr_mod_002.fits',
-#                 'alpha_lyr_stis_008.fits']
 
 
 
@@ -60,10 +54,3 @@ def delete_filter_data():
     if not os.path.exists(FILTER_DATA_PATH):
         print('Filter Data does not exist - nothing to delete')
     os.remove(FILTER_DATA_PATH)
-
-def download_calibration_data():
-
-    if os.path.exists(ALPHA_LYR_PATH):
-        print('Alpha Lyra calibration already exists - not downloading')
-        download_from_url(ALPHA_LYR_MOD_URL, ALPHA_LYR_FNAME)
-
