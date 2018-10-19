@@ -74,8 +74,7 @@ class BaseFilterCurve(object):
     """
 
     @classmethod
-    def load_filter(cls, filter_name=None, wavelength_unit=None,
-                    interpolation_kind='linear'):
+    def load_filter(cls, filter_name=None, interpolation_kind='linear'):
         """
 
         Parameters
@@ -108,24 +107,8 @@ class BaseFilterCurve(object):
                     filter_name))
             finally:
                 filter_store.close()
-                
-            if 'gemini' in filter_name:
-                wavelength_unit = 'nm'
-            elif 'bessell' in filter_name:
-                wavelength_unit = 'angstrom'
 
-            elif 'hst' in filter_name:
-                wavelength_unit = 'angstrom'
-
-            elif 'decam' in filter_name:
-                wavelength_unit = 'angstrom'
-
-            elif 'sdss' in filter_name:
-                wavelength_unit = 'angstrom'
-
-            if wavelength_unit is None:
-                raise ValueError('No "wavelength_unit" given and none '
-                                 'autodetected')
+            wavelength_unit = 'angstrom'
 
             wavelength = filter.wavelength.values * u.Unit(wavelength_unit)
 
