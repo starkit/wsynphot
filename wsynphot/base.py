@@ -16,8 +16,6 @@ from astropy import utils
 import numpy as np
 from calibration import get_vega
 
-def _calculate_filter_flux_density(flux, filter):
-    pass
 
 def calculate_filter_flux_density(spectrum, filter):
     """
@@ -267,6 +265,9 @@ class BaseFilterCurve(object):
             transmission = self.transmission_lambda
 
         ax.plot(self.wavelength, transmission, **plot_kwargs)
+        ax.set_xlabel('Wavelength [{0}]'.format(
+            self.wavelength.unit.to_string(format='latex')))
+        ax.set_xlabel('Transmission [1]')
 
         if make_label==True and self.filter_name is not None:
             if format_filter_name is not None:
@@ -278,6 +279,7 @@ class BaseFilterCurve(object):
             ax.text(text_x, text_y, filter_name,
                     horizontalalignment='center', verticalalignment='center',
                     bbox=dict(facecolor='white', alpha=0.5))
+
     def get_wavelength_start(self, threshold=0.01):
         norm_cum_sum = (np.cumsum(self.transmission_lambda)
                         / np.sum(self.transmission_lambda))
