@@ -1,9 +1,11 @@
 # defining the base filter curve classes
 
+from __future__ import print_function
 import os
 
 from scipy import interpolate
 from spectrum1d import SKSpectrum1D as Spectrum1D
+import pandas as pd
 from wsynphot.data.base import FILTER_DATA_PATH
 
 
@@ -83,6 +85,7 @@ class BaseFilterCurve(object):
         ----------
 
         filter_name: str or None
+            if None is provided will return a DataFrame of all filters
 
         wavelength_unit: str or astropy.units.Unit
             for some filtersets (e.g. gemini) this can be autodetected
@@ -97,12 +100,9 @@ class BaseFilterCurve(object):
                           'download it by doing wsynphot.download_filter_data'
                           '()'.format(FILTER_DATA_PATH))
         if filter_name is None:
-            filter_store = HDFStore(FILTER_DATA_PATH, mode='r')
-            available_filters = filter_store.keys()
-            filter_store.close()
-            print ("Available Filters\n"
-                   "-----------------\n\n" + '\n'.join(available_filters))
-
+            print("All . have been replaced by backslashes")
+            filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index')
+            return filter_index
         else:
             filter_store = HDFStore(FILTER_DATA_PATH, mode='r')
             try:
