@@ -18,3 +18,4 @@ if not on_rtd:
         from wsynphot.base import BaseFilterCurve, FilterCurve, FilterSet, MagnitudeSet
         from wsynphot.calibration import get_vega
         from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
+        from wsynphot.data.base import delete_filter_data, download_filter_data

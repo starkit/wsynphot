@@ -1,10 +1,12 @@
 # defining the base filter curve classes
 
+import os
+
 from scipy import interpolate
 from spectrum1d import SKSpectrum1D as Spectrum1D
-import wsynphot
-import os
-filter_data_fname = os.path.join(wsynphot.__path__[0], 'data', 'filter_data.h5')
+from wsynphot.data.base import FILTER_DATA_PATH
+
+
 from pandas import HDFStore
 from astropy import units as u, constants as const
 
@@ -90,15 +92,19 @@ class BaseFilterCurve(object):
 
 
         """
+        if not os.path.exists(FILTER_DATA_PATH):
+            raise IOError('Filter Data does not exist at - {0} - please '
+                          'download it by doing wsynphot.download_filter_data'
+                          '()'.format(FILTER_DATA_PATH))
         if filter_name is None:
-            filter_store = HDFStore(filter_data_fname, mode='r')
+            filter_store = HDFStore(FILTER_DATA_PATH, mode='r')
             available_filters = filter_store.keys()
             filter_store.close()
             print ("Available Filters\n"
                    "-----------------\n\n" + '\n'.join(available_filters))
 
         else:
-            filter_store = HDFStore(filter_data_fname, mode='r')
+            filter_store = HDFStore(FILTER_DATA_PATH, mode='r')
             try:
                 filter = filter_store[filter_name]
             except KeyError:
