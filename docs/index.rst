@@ -3,14 +3,10 @@ wsynphot
 ********
 
 
-This is a package for doing synthetic photometry.
+This is a package for doing synthetic photometry. Quickstart
 
 .. toctree::
   :maxdepth: 2
 
-  packagename/index.rst
+  quickstart
 
-Reference/API
-=============
-
-.. automodapi:: wsynphot

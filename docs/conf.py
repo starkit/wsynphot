@@ -102,6 +102,7 @@ release = package.__version__
 extensions += [
     'nbsphinx',
     'sphinx.ext.mathjax',
+    ]
 
 
 
