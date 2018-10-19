@@ -7,7 +7,7 @@ from tqdm.autonotebook import tqdm
 
 FILTER_DATA_PATH = os.path.join(os.path.dirname(__file__), 'filter_data.h5')
 
-DATA_TRANSMISSION_URL = ("https://zenodo.org/record/1467244/files/"
+DATA_TRANSMISSION_URL = ("https://zenodo.org/record/1467309/files/"
                          "filter_data.h5?download=1")
 
 

@@ -100,7 +100,6 @@ class BaseFilterCurve(object):
                           'download it by doing wsynphot.download_filter_data'
                           '()'.format(FILTER_DATA_PATH))
         if filter_name is None:
-            print("All . have been replaced by backslashes")
             filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index')
             return filter_index
         else:
