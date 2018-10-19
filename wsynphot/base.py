@@ -35,7 +35,6 @@ def calculate_filter_flux_density(spectrum, filter):
     """
 
     filtered_spectrum = filter * spectrum
-
     filter_flux_density = np.trapz(filtered_spectrum.flux * filtered_spectrum.wavelength,
                     filtered_spectrum.wavelength)
     return filter_flux_density
