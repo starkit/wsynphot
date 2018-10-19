@@ -8,6 +8,7 @@ from spectrum1d import SKSpectrum1D as Spectrum1D
 import pandas as pd
 from wsynphot.data.base import FILTER_DATA_PATH
 
+ALPHA_LYR_FNAME = 'alpha_lyr_mod_002.fits'
 
 from pandas import HDFStore
 from astropy import units as u, constants as const
