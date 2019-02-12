@@ -74,6 +74,31 @@ class BaseFilterCurve(object):
         allowed interpolation kinds given in scipy.interpolate.interp1d
     """
 
+
+
+    @staticmethod
+    def get_filter_data_frame():
+        """
+        Get the index Dataframe for the Filters
+        """
+        if not os.path.exists(FILTER_DATA_PATH):
+            raise IOError('Filter Data does not exist at - {0} - please '
+                          'download it by doing wsynphot.download_filter_data'
+                          '()'.format(FILTER_DATA_PATH))
+        if filter_name is None:
+            filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index')
+            return filter_index
+
+    @classmethod
+    def list_filters(cls):
+        """
+        List available filter sets
+        """
+
+        return self.get_filter_data_frame()
+
+
+
     @classmethod
     def load_filter(cls, filter_name=None, interpolation_kind='linear'):
         """
