@@ -85,9 +85,9 @@ class BaseFilterCurve(object):
             raise IOError('Filter Data does not exist at - {0} - please '
                           'download it by doing wsynphot.download_filter_data'
                           '()'.format(FILTER_DATA_PATH))
-        if filter_name is None:
-            filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index')
-            return filter_index
+
+        filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index')
+        return filter_index
 
     @classmethod
     def list_filters(cls):
@@ -95,7 +95,7 @@ class BaseFilterCurve(object):
         List available filter sets
         """
 
-        return self.get_filter_data_frame()
+        return cls.get_filter_data_frame()
 
 
 
