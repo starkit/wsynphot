@@ -57,6 +57,28 @@ def calculate_ab_magnitude(spectrum, filter):
     return -2.5 * np.log10(filtered_f_lambda / filter.zp_ab_f_lambda)
 
 
+
+
+def get_filter_data_frame():
+    """
+    Get the index Dataframe for the Filters
+    """
+    if not os.path.exists(FILTER_DATA_PATH):
+        raise IOError('Filter Data does not exist at - {0} - please '
+                      'download it by doing wsynphot.download_filter_data'
+                      '()'.format(FILTER_DATA_PATH))
+
+    filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index').set_index('wsynphot_filter_id')
+    return filter_index
+
+
+def list_filters(cls):
+    """
+    List available filter sets
+    """
+
+    return cls.get_filter_data_frame()
+
 class BaseFilterCurve(object):
     """
     Basic filter curve class
@@ -73,31 +95,6 @@ class BaseFilterCurve(object):
     interpolation_kind: str
         allowed interpolation kinds given in scipy.interpolate.interp1d
     """
-
-
-
-    @staticmethod
-    def get_filter_data_frame():
-        """
-        Get the index Dataframe for the Filters
-        """
-        if not os.path.exists(FILTER_DATA_PATH):
-            raise IOError('Filter Data does not exist at - {0} - please '
-                          'download it by doing wsynphot.download_filter_data'
-                          '()'.format(FILTER_DATA_PATH))
-
-        filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index')
-        return filter_index
-
-    @classmethod
-    def list_filters(cls):
-        """
-        List available filter sets
-        """
-
-        return cls.get_filter_data_frame()
-
-
 
     @classmethod
     def load_filter(cls, filter_name=None, interpolation_kind='linear'):
@@ -117,13 +114,10 @@ class BaseFilterCurve(object):
 
 
         """
-        if not os.path.exists(FILTER_DATA_PATH):
-            raise IOError('Filter Data does not exist at - {0} - please '
-                          'download it by doing wsynphot.download_filter_data'
-                          '()'.format(FILTER_DATA_PATH))
         if filter_name is None:
-            filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index')
+            filter_index = get_filter_data_frame()
             return filter_index
+
         else:
             filter_store = HDFStore(FILTER_DATA_PATH, mode='r')
             try:
