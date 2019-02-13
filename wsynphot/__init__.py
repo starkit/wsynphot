@@ -16,7 +16,7 @@ if not on_rtd:
     # For egg_info test builds to pass, put package imports here.
     if not _ASTROPY_SETUP_:
         from wsynphot.base import (BaseFilterCurve, FilterCurve, FilterSet,
-                                   MagnitudeSet)
+                                   MagnitudeSet, list_filters)
         from wsynphot.calibration import get_vega
         from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
         from wsynphot.data.base import (
