@@ -59,7 +59,7 @@ def calculate_ab_magnitude(spectrum, filter):
 
 
 
-def get_filter_data_frame():
+def get_filter_index():
     """
     Get the index Dataframe for the Filters
     """
@@ -72,12 +72,12 @@ def get_filter_data_frame():
     return filter_index
 
 
-def list_filters(cls):
+def list_filters():
     """
     List available filter sets
     """
 
-    return cls.get_filter_data_frame()
+    return get_filter_index()
 
 class BaseFilterCurve(object):
     """
@@ -115,7 +115,7 @@ class BaseFilterCurve(object):
 
         """
         if filter_name is None:
-            filter_index = get_filter_data_frame()
+            filter_index = get_filter_index()
             return filter_index
 
         else:
