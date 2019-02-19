@@ -3,12 +3,16 @@
 """
 This is an Astropy affiliated package.
 """
-import os
+import sys, os
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 # Affiliated packages may add whatever they like to this file, but
 # should keep this content at the top.
 # ----------------------------------------------------------------------------
 from ._astropy_init import *
+
+from wsynphot.util.colored_logger import ColoredFormatter, formatter_message
+import logging
+
 
 if not on_rtd:
     # ----------------------------------------------------------------------------
@@ -22,3 +26,17 @@ if not on_rtd:
         from wsynphot.data.base import (
             delete_filter_data, download_filter_data,
             ALPHA_LYR_PATH, ALPHA_LYR_FNAME)
+
+FORMAT = "[$BOLD%(name)-20s$RESET][%(levelname)-18s]  %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
+COLOR_FORMAT = formatter_message(FORMAT, True)
+
+logging.captureWarnings(True)
+logger = logging.getLogger('tardis')
+logger.setLevel(logging.INFO)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_formatter = ColoredFormatter(COLOR_FORMAT)
+console_handler.setFormatter(console_formatter)
+
+logger.addHandler(console_handler)
+logging.getLogger('py.warnings').addHandler(console_handler)
