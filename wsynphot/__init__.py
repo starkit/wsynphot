@@ -27,11 +27,11 @@ if not on_rtd:
             delete_filter_data, download_filter_data,
             ALPHA_LYR_PATH, ALPHA_LYR_FNAME)
 
-FORMAT = "[$BOLD%(name)-20s$RESET][%(levelname)-18s]  %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
+FORMAT = "[%(levelname)-18s] [$BOLD%(name)-20s$RESET] %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
 COLOR_FORMAT = formatter_message(FORMAT, True)
 
 logging.captureWarnings(True)
-logger = logging.getLogger('tardis')
+logger = logging.getLogger('wsynphot')
 logger.setLevel(logging.INFO)
 
 console_handler = logging.StreamHandler(sys.stdout)
