@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 
 import requests
-from tqdm.auto import tqdm
+from tqdm.autonotebook import tqdm
 from wsynphot.config import get_data_dir
 
 

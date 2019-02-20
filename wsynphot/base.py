@@ -63,12 +63,12 @@ def get_filter_index():
     """
     Get the index Dataframe for the Filters
     """
-    if not os.path.exists(FILTER_DATA_PATH):
+    if not os.path.exists(FILTER_DATA_FPATH):
         raise IOError('Filter Data does not exist at - {0} - please '
                       'download it by doing wsynphot.download_filter_data'
-                      '()'.format(FILTER_DATA_PATH))
+                      '()'.format(FILTER_DATA_FPATH))
 
-    filter_index = pd.read_hdf(FILTER_DATA_PATH, 'index').set_index('wsynphot_filter_id')
+    filter_index = pd.read_hdf(FILTER_DATA_FPATH, 'index').set_index('wsynphot_filter_id')
     return filter_index
 
 
