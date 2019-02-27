@@ -4,24 +4,22 @@ channels:
     - conda-forge
 
 dependencies:
-- python=2.7.15
-- numpy=1.12
-- scipy=1.0
-- pandas
-- pytables
+- python=2.7
+- numpy=1
 - h5py=2.6
-- matplotlib
-- astropy=2
+- matplotlib=2
+- astropy=1.1.2
 - numexpr=2.6
 - pytest=3.0
 - pyyaml=3.12
 - tqdm=4
 - jupyter
+- notebook
+- scipy
+- pandas
+- pytables
 
 # RTD requirements
-- nbformat
-- nbconvert
-- sphinx
 
 #Coverage requirements
 - coverage=3.7.1
@@ -30,8 +28,14 @@ dependencies:
 - pytest-cov=2.2.1
 
 - pip:
+  - setuptools==36.2.0
   - sphinx_bootstrap_theme
+  - sphinxcontrib-bibtex
+  - sphinxcontrib-tikz
   - coveralls
+  - sphinx==1.5.3
+  - nbconvert
   - numpydoc
   - docutils
-  - nbsphinx
+  - nbformat
+- nbsphinx
