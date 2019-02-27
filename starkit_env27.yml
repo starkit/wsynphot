@@ -30,6 +30,7 @@ dependencies:
 - pytest-cov=2.2.1
 
 - pip:
+  - setuptools==36.2.0
   - sphinx_bootstrap_theme
   - coveralls
   - numpydoc
