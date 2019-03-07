@@ -289,7 +289,7 @@ class BaseFilterCurve(object):
         ax.plot(self.wavelength, transmission, **plot_kwargs)
         ax.set_xlabel('Wavelength [{0}]'.format(
             self.wavelength.unit.to_string(format='latex')))
-        ax.set_xlabel('Transmission [1]')
+        ax.set_ylabel('Transmission [1]')
 
         if make_label==True and self.filter_name is not None:
             if format_filter_name is not None:
