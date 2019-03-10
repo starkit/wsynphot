@@ -20,6 +20,7 @@ dependencies:
 
 # RTD requirements
 - nbformat
+- nbsphinx
 - nbconvert
 - sphinx
 
@@ -34,4 +35,3 @@ dependencies:
   - coveralls
   - numpydoc
   - docutils
-  - nbsphinx
