@@ -22,7 +22,7 @@ dependencies:
 - nbformat
 - nbsphinx
 - nbconvert
-- sphinx
+- sphinx==1.5.6
 
 #Coverage requirements
 - coverage=3.7.1
