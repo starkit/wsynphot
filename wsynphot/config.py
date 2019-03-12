@@ -25,7 +25,8 @@ def get_data_dir():
     data_dir = config.get('data_dir', None)
     if data_dir is None:
         config_fpath = os.path.join(get_config_dir(), 'wsynphot_config.yml')
-        logging.critical('\n{line_stars}\n\nWSYNPHOT DATA DIRECTORY not specified in {config_file}:\n\n'
+        logging.critical('\n{line_stars}\n\nWYSNPHOT will download filters to its data directory {default_data_dir}\n\n'
+                         'WSYNPHOT DATA DIRECTORY not specified in {config_file}:\n\n'
                          'ASSUMING DEFAULT DATA DIRECTORY {default_data_dir}\n '
                          'YOU CAN CHANGE THIS AT ANY TIME IN {config_file} \n\n'
                          '{line_stars} \n\n'.format(line_stars='*'*80, config_file=config_fpath,
