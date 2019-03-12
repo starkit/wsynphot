@@ -33,6 +33,7 @@ def get_data_dir():
         os.makedirs(DEFAULT_DATA_DIR)
         config['data_dir'] = DEFAULT_DATA_DIR
         yaml.dump(config, open(config_fpath, 'w'), default_flow_style=False)
+        data_dir = DEFAULT_DATA_DIR
 
     if not os.path.exists(data_dir):
         raise IOError('Data directory specified in {0} does not exist'.format(data_dir))
