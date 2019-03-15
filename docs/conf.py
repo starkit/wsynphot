@@ -101,7 +101,6 @@ version = package.__version__.split('-', 1)[0]
 release = package.__version__
 extensions += [
     'nbsphinx',
-    'sphinx.ext.mathjax',
     ]
 
 
