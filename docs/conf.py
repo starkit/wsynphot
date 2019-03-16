@@ -178,3 +178,57 @@ if eval(setup_cfg.get('edit_on_github')):
 
     edit_on_github_source_root = ""
     edit_on_github_doc_root = "docs"
+
+
+# Render rst pages as a jinja template to be able 
+# to generate rst docs from data (i.e. passed to template context) ----------------------
+def rstjinja(app, docname, source):
+    if app.builder.format != 'html':    # Make sure builder output is HTML
+        return
+    src = source[0]
+    context=app.config.html_context    # context dictionary to be passed for rendering
+    context.update(obsvContext(docname))
+    rendered = app.builder.templates.render_string(src, context)
+    source[0] = rendered
+
+def obsvContext(docname):
+    dirsInPath=docname.split(os.sep)
+    if 'obsv-filters' in dirsInPath[:-1]: # doc file lies in directory "obsv-filters"
+        obsv=dirsInPath[-1]
+        context={'obsv': obsv}
+    else:
+        context={}
+    return context
+
+def setup(app):
+    app.connect("source-read", rstjinja)
+
+
+import wsynphot
+import pandas as pd
+import shutil
+
+# Storing data into variables--------------------------------------------------------
+try:
+    df=wsynphot.list_filters()
+except IOError: #If filter_data.h5 not present
+    wsynphot.download_filter_data()
+    df=wsynphot.list_filters()
+#Obtain list of Obsv. facilities from df
+obsvList=df['Obs. Facility'].unique().tolist()
+
+#Pass data variables to html_context for rendering templates-------------------------
+html_context = {
+    'data': df,
+    'obsvList': obsvList
+}
+
+# Automatically create(or overwrite) doc for filters of each obsv. facility-----------
+exclude_patterns.append('obsv-filters/content.rst') 
+# content.rst is only for populating destPath docs
+# and it enables to change all these similar docs by doing changes only in it
+
+srcPath=os.path.join('obsv-filters','content.rst')
+for obsv in obsvList:
+    destPath=os.path.join('obsv-filters',str(obsv)+'.rst')
+    shutil.copyfile(srcPath,destPath)
