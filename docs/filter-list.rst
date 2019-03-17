@@ -16,7 +16,7 @@ List of the available filters
        {% if inst == 'NA' %}
        \-
        {% else %}
-       #. `{{ inst }} <obsv-filters/{{ obsv|string() }}.html#{{ inst }}>`__
+       #. `{{ inst }} <obsv-filters/{{ obsv|string() }}.html#{{ inst|lower()|replace('_','-') }}>`__
        {% endif %}
        {% endfor %}
      - {{ obsv_data|length() }}
