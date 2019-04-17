@@ -1,23 +1,26 @@
-Astropy affiliated package template
-===================================
+Wsynphot
+==========
 
-This is the template for affiliated packages of the Astropy project.
+.. image:: https://travis-ci.com/starkit/wsynphot.svg?branch=master
+   :target: https://travis-ci.com/starkit/wsynphot
 
-Astropy affiliated packages are astronomy-related Python packages that
-have requested to be part of the Astropy project’s community.
-Such packages can make use of the setup, installation, and documentation
-infrastructure developed for the ``astropy`` core package simply by
-using this template to lay out the package.
+Installation
+-------------
+1. If you are already using `starkit package <https://github.com/starkit/starkit>`_, use the same conda environment of starkit. And do a simple install of wsynphot:
+::
+    $ conda activate starkit
+    $ pip install git+https://github.com/starkit/wsynphot
 
-For more information, see:
+2. Else if you are directly using wsynphot for 1st time, then:
+::
+    $ curl -O https://raw.githubusercontent.com/starkit/starkit/master/starkit_env27.yml
+    $ conda env create --file starkit_env27.yml -n starkit
+    $ source activate starkit
+    $ pip install git+https://github.com/starkit/wsynphot
 
-* `Detailed instructions for using this template <http://astropy.readthedocs.org/en/latest/development/affiliated-packages.html>`_
-* `The Affiliated Packages section of the Astropy web site <http://affiliated.astropy.org>`_
-* `This template's Github code repository <https://github.com/astropy/package-template>`_
-
-Status reports for developers
------------------------------
-
-.. image:: https://travis-ci.org/astropy/package-template.png?branch=master
-    :target: https://travis-ci.org/astropy/package-template
-    :alt: Test Status
+~ For advanced uses, instead of ``pip installing`` package, you can clone the repository and use its ``setup.py`` file. Simply replace the ``$ pip install git+https://github.com/starkit/wsynphot`` used above, by following:
+::
+    $ git clone https://github.com/starkit/wsynphot.git
+    $ cd wsynphot
+    $ python setup.py <CMD>
+    # <CMD> may be install, develop, build, etc.
