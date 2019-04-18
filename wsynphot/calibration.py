@@ -17,7 +17,7 @@ def get_vega(vega_file=None):
         raise IOError('Calibration file {0} does not exist - please download by'
                       'using wsynphot.download_calibration() or '
                       'wsynphot.download_all()'.format(vega_file))
-    vega_table = fits.getdata(get_calibration_dir(vega_file), extension=1)
+    vega_table = fits.getdata(vega_file, extension=1)
     vega = Spectrum1D.from_array(vega_table['wavelength'] * u.angstrom,
                                  vega_table['flux'] *
                                  u.erg / u.s/ u.cm**2 / u.angstrom)
