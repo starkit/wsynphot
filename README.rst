@@ -8,7 +8,7 @@ Installation
 -------------
 1. If you are already using `starkit package <https://github.com/starkit/starkit>`_, use the same conda environment of starkit. And do a simple install of wsynphot:
 ::
-    $ conda activate starkit
+    $ source activate starkit
     $ pip install git+https://github.com/starkit/wsynphot
 
 2. Else if you are directly using wsynphot for 1st time, then:
