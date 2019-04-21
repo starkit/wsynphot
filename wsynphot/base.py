@@ -3,7 +3,7 @@ from __future__ import print_function
 import os
 
 from scipy import interpolate
-from spectrum1d import SKSpectrum1D as Spectrum1D
+from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
 import pandas as pd
 from wsynphot.data.base import FILTER_DATA_FPATH
 
@@ -14,7 +14,7 @@ from astropy import units as u, constants as const
 
 from astropy import utils
 import numpy as np
-from calibration import get_vega
+from wsynphot.calibration import get_vega
 
 
 def calculate_filter_flux_density(spectrum, filter):
