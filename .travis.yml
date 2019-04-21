@@ -14,6 +14,14 @@ matrix:
         # Do a coverage test in Python 2.
         - python: 2.7
           env: SETUP_CMD='test --coverage'
+        
+        # Generate docs
+        #- python: 2.7
+        #  env: SETUP_CMD='build_docs'
+        
+        # Do a coverage test in Python 3.
+        - python: 3.6
+          env: SETUP_CMD='test --coverage'
 
 before_install:
 
@@ -25,16 +33,19 @@ before_install:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes conda
-    # Download environment file from starkit repo
-    - curl -O https://raw.githubusercontent.com/starkit/starkit/master/starkit_env27.yml
 
     # UPDATE APT-GET LISTINGS
     - sudo apt-get update
+    
+    # Choose environment file on the basis of python version
+    - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then ENV_FILE=starkit_env27.yml;
+      elif [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then ENV_FILE=starkit_env3.yml; fi
 
 install:
 
     # CONDA
-    - conda env create -n starkit --file ./starkit_env27.yml
+    - curl -O https://raw.githubusercontent.com/starkit/starkit/master/$ENV_FILE  # Download env file from starkit repo
+    - conda env create -n starkit --file ./$ENV_FILE
     - source activate starkit
     # Install starkit since it is required by wsynphot 
     - pip install git+https://github.com/starkit/starkit
