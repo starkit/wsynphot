@@ -6,6 +6,8 @@ Wsynphot
 
 Installation
 -------------
+.. role:: inst-beg
+
 1. If you are already using `starkit package <https://github.com/starkit/starkit>`_, use the same conda environment of starkit. And do a simple install of wsynphot:
 ::
     $ source activate starkit
@@ -24,3 +26,5 @@ Installation
     $ cd wsynphot
     $ python setup.py <CMD>
     # <CMD> may be install, develop, build, etc.
+
+.. role:: inst-end
