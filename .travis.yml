@@ -15,13 +15,17 @@ matrix:
         - python: 2.7
           env: SETUP_CMD='test --coverage'
         
-        # Generate docs
-        #- python: 2.7
-        #  env: SETUP_CMD='build_docs'
+        # Generate docs in Python 2
+        - python: 2.7
+          env: SETUP_CMD='build_docs'
         
         # Do a coverage test in Python 3.
         - python: 3.6
           env: SETUP_CMD='test --coverage'
+          
+        # Generate docs in Python 3
+        - python: 3.6
+          env: SETUP_CMD='build_docs'
 
 before_install:
 
@@ -63,7 +67,7 @@ install:
 
 script:
    - python setup.py $SETUP_CMD
-   - if [[ $SETUP_CMD == 'build_docs' ]]; then source deploy_docs.sh; fi
+   #- if [[ $SETUP_CMD == 'build_docs' ]]; then source deploy_docs.sh; fi
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line
