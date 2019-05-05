@@ -1,12 +1,11 @@
 ********
-wsynphot
+Wsynphot
 ********
 
-
-This is a package for doing synthetic photometry. Quickstart
+This is a package for doing synthetic photometry.
 
 .. toctree::
   :maxdepth: 2
 
+  installation
   quickstart
-
