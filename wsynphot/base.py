@@ -79,6 +79,20 @@ def list_filters():
 
     return get_filter_index()
 
+#To check whether both passed strings are float or not
+def isFloat(str1,str2):
+    try:
+        float(str1)
+        isFloat1=True
+    except ValueError:
+        isFloat1=False
+    try:
+        float(str2)
+        isFloat2=True
+    except ValueError:
+        isFloat2=False
+    return isFloat1 & isFloat2
+
 class BaseFilterCurve(object):
     """
     Basic filter curve class
@@ -132,6 +146,12 @@ class BaseFilterCurve(object):
                     filter_name))
             finally:
                 filter_store.close()
+
+            #Cleaning filter data if string(dtype object) is present--------
+            if filter.wavelength.dtype==np.dtype(object) or filter.transmission_lambda.dtype==np.dtype(object):
+            	cleaningIndex=filter.apply(lambda row : isFloat(row['wavelength'],row['transmission_lambda']),axis = 1)
+            	filter=filter[cleaningIndex].astype(float)
+            	filter.reset_index(drop=True,inplace=True)
 
             wavelength_unit = 'angstrom'
 
