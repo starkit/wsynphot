@@ -56,8 +56,18 @@ def calculate_ab_magnitude(spectrum, filter):
 
     return -2.5 * np.log10(filtered_f_lambda / filter.zp_ab_f_lambda)
 
-
-
+#To remove those filters from filter_index which have empty dataframe
+def remove_empty_filters(filter_index):
+	remove_indices=[]
+	with HDFStore(FILTER_DATA_FPATH, mode='r') as filter_store:
+		for filter in filter_index['wsynphot_filter_id']:
+			filter_data=filter_store[filter]
+			if filter_data.empty:
+				remove_indices.append(False)
+			else:
+				remove_indices.append(True)
+	clean_filter_index=filter_index[remove_indices].reset_index(drop=True)
+	return clean_filter_index
 
 def get_filter_index():
     """
@@ -68,8 +78,9 @@ def get_filter_index():
                       'download it by doing wsynphot.download_filter_data'
                       '()'.format(FILTER_DATA_FPATH))
 
-    filter_index = pd.read_hdf(FILTER_DATA_FPATH, 'index').set_index('wsynphot_filter_id')
-    return filter_index
+    filter_index = pd.read_hdf(FILTER_DATA_FPATH, 'index')
+    filter_index = remove_empty_filters(filter_index) #Clean filter_index
+    return filter_index.set_index('wsynphot_filter_id')
 
 
 def list_filters():
@@ -134,6 +145,7 @@ class BaseFilterCurve(object):
                           '()'.format(FILTER_DATA_FPATH))
         if filter_name is None:
             filter_index = pd.read_hdf(FILTER_DATA_FPATH, 'index')
+            filter_index = remove_empty_filters(filter_index) #Clean filter_index
             return filter_index
 
         else:
@@ -146,6 +158,10 @@ class BaseFilterCurve(object):
                     filter_name))
             finally:
                 filter_store.close()
+            
+            if filter.empty:	#Filter with empty dataframe
+                raise ValueError('Data for requested filter ({0}) is not available'.format(
+                    filter_name))
 
             #Cleaning filter data if string(dtype object) is present--------
             if filter.wavelength.dtype==np.dtype(object) or filter.transmission_lambda.dtype==np.dtype(object):
