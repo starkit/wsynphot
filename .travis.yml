@@ -6,6 +6,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - PIP_INSTALL='pip install'
+        - secure: 'cd16980ba90e42d74c5defd8bde9183a333eee05'
     matrix:
         - SETUP_CMD='egg_info'
 
@@ -67,7 +68,8 @@ install:
 
 script:
    - python setup.py $SETUP_CMD
-   #- if [[ $SETUP_CMD == 'build_docs' ]]; then source deploy_docs.sh; fi
+   # Deploy docs using doctr and python-3.6 env
+   - if [[ $SETUP_CMD == 'build_docs' && $TRAVIS_PYTHON_VERSION == 3.6 ]]; then source deploy_docs.sh; fi
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line
