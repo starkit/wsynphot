@@ -6,6 +6,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - PIP_INSTALL='pip install'
+        - secure: "LqhodO8azGSHGh1uyt8KYcjh7KEbLS7/ar1iZO0Sl1o3xwAQuQ2IErAnp0QToFNdhoCYU0yhXg8D9/sACFji+CAMCS8WIxOzHAHUgg1Fv9S7UjRC72wbCe9JFid7rT/yjwIY28q7kmgCoDGXYwMzRQLt7Q8vJvlgc7Pw6J74A/pbI6w5PdiPCxy/K6zZJBsiE4faOapHpCGBR0JRHNoZVWzAV26Q2C2xHu2Bq6bfZdh7qkVSm1T1Idex8yvzpAiwmPoqfFGv9bbJfoRdYQ3LkuIYwHcXy7MzLAfx3oNhMgnyHID9Gfx2YVGLHK+JMKgDs77Y3MUaaDVMBKiYFNx0h4CzCWVBoMeS82zxN9rlvud7cmV/1P++VaPI78krGF75jqL+nFRCnkOqaO8WCN0fSHBAEv0QFCettiXCExvqBnk///h5kb46Jc1R6qlNANJAFXf7iC3vzuU+N5PRWeZ/SjiolVE//7kjlFI3xl2x+1Tl49dI+WTg32XxrJJutI4uVgygaYsidaCg/22feNJtHK7zBgyC1ObR7+B4a3gqLXTNhHQCfWtKh3xQQblHnAtMbwmv7kzPwfL61YkLe+WsaHwjNORASoapAtla+MaDcE2iR3K8BKTTouQ/wnS1Lvm6YIoQyE0Bo6R4q1Ce+1y0ywJ6wo+uuKHZ2UrF0PHDYn0="
     matrix:
         - SETUP_CMD='egg_info'
 
@@ -66,7 +67,12 @@ install:
     - if [[ $SETUP_CMD == 'test --coverage' ]]; then $PIP_INSTALL coverage coveralls; fi
 
 script:
-   - python setup.py $SETUP_CMD
+    - python setup.py $SETUP_CMD
+    #- set -e
+    #- <Command to build your docs>
+    #- pip install doctr
+    #- doctr deploy --built-docs <path/to/built/html/> <target-directory>
+
    #- if [[ $SETUP_CMD == 'build_docs' ]]; then source deploy_docs.sh; fi
 
 after_success:
