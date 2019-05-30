@@ -68,12 +68,8 @@ install:
 
 script:
     - python setup.py $SETUP_CMD
-    #- set -e
-    #- <Command to build your docs>
-    #- pip install doctr
-    #- doctr deploy --built-docs <path/to/built/html/> <target-directory>
-
-   #- if [[ $SETUP_CMD == 'build_docs' ]]; then source deploy_docs.sh; fi
+    # Deploy docs using doctr and python-3.6 env
+    - if [[ $SETUP_CMD == 'build_docs' && $TRAVIS_PYTHON_VERSION == 3.6 ]]; then source deploy_docs.sh; fi
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line
