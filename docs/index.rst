@@ -9,3 +9,5 @@ This is a package for doing synthetic photometry.
 
   installation
   quickstart
+  filter-curves
+  filter-list
