@@ -16,10 +16,6 @@ matrix:
         - python: 2.7
           env: SETUP_CMD='test --coverage'
         
-        # Generate docs in Python 2
-        - python: 2.7
-          env: SETUP_CMD='build_docs'
-        
         # Do a coverage test in Python 3.
         - python: 3.6
           env: SETUP_CMD='test --coverage'
