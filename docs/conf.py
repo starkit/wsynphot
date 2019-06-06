@@ -182,7 +182,7 @@ if eval(setup_cfg.get('edit_on_github')):
 
 # Render rst pages as a jinja template to be able 
 # to generate rst docs from data (i.e. passed to template context) ---------
-def rstjinja(app, docname, source):
+def rst_jinja(app, docname, source):
     if app.builder.format != 'html':  # Make sure builder output is HTML
         return
     src = source[0]
@@ -192,17 +192,17 @@ def rstjinja(app, docname, source):
     source[0] = rendered
 
 def facility_context(docname):
-    dirsInPath = docname.split(os.sep)
-    if '_facility_pages' in dirsInPath[:-1]: 
+    dirs_in_path = docname.split(os.sep)
+    if '_facility_pages' in dirs_in_path[:-1]: 
     # doc file (.rst) lies in directory "_facility_pages"
-        facility_name = dirsInPath[-1]
+        facility_name = dirs_in_path[-1]
         context = {'facility': facility_name}
     else:
         context = {}
     return context
 
 def setup(app):
-    app.connect("source-read", rstjinja)
+    app.connect("source-read", rst_jinja)
 
 
 import wsynphot
