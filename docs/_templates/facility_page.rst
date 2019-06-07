@@ -17,10 +17,29 @@ Following **Instruments** are present:
 {% endif %}
 
 {% set inst_data=facility_data[facility_data['Instrument']==inst] %}
-{# % for filter in inst_data % #}
-No. of filters = {{ inst_data|length() }}
 
-<Table of Filters>
+.. list-table::
+   :header-rows: 1
+
+   * - {{ inst_data.index.name }}
+{% for col_name in inst_data.columns.values %}
+     - {{ col_name }}
+{% endfor %}
+
+{% for filter_info in inst_data.itertuples() %}
+   * - {{ filter_info[0] }}
+     - {{ filter_info[1] }}
+     - {{ filter_info[2] }}
+     - {{ filter_info[3] }}
+     - {{ filter_info[4] }}
+     - {{ filter_info[5] }}
+     - {{ filter_info[6] }}
+     - {{ filter_info[7] }}
+     - {{ filter_info[8] }}
+     - {{ filter_info[9] }}
+     - {{ filter_info[10]|replace('_ ','\_ ') }}
+{% endfor %}
+
 
 <Plots>
 
