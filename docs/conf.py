@@ -229,4 +229,4 @@ html_context = {
 os.makedirs('_facility_pages', exist_ok=True)
 for facility in facility_list:
     shutil.copyfile('_templates/facility_page.rst',
-                    os.path.join('_facility_pages', facility + '.rst'))
+                    os.path.join('_facility_pages', '{0}.rst'.format(facility)))

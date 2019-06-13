@@ -27,17 +27,15 @@ Following **Instruments** are present:
 {% endfor %}
 
 {% for filter_info in inst_data.itertuples() %}
-   * - {{ filter_info[0] }}
-     - {{ filter_info[1] }}
-     - {{ filter_info[2] }}
-     - {{ filter_info[3] }}
-     - {{ filter_info[4] }}
-     - {{ filter_info[5] }}
-     - {{ filter_info[6] }}
-     - {{ filter_info[7] }}
-     - {{ filter_info[8] }}
-     - {{ filter_info[9] }}
-     - {{ filter_info[10]|replace('_ ','\_ ') }}
+{% for info in filter_info %}
+{% if loop.first %}
+   * - {{ info }}
+{% elif loop.last %}
+     - {{ info|replace('_ ','\_ ') }}
+{% else %}
+     - {{ info }}
+{% endif %}
+{% endfor %}
 {% endfor %}
 
 
