@@ -1,8 +1,8 @@
 Wsynphot
 ==========
 
-.. image:: https://travis-ci.com/starkit/wsynphot.svg?branch=master
-   :target: https://travis-ci.com/starkit/wsynphot
+.. image:: https://dev.azure.com/starkit/wsynphot/_apis/build/status/wsynphot-CI?branchName=master
+   :target: https://dev.azure.com/starkit/wsynphot/_build/latest?definitionId=1&branchName=master
 
 Installation
 -------------
