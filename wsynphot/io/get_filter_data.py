@@ -10,6 +10,37 @@ from astropy.io.votable import parse_single_table
 FLOAT_MAX = np.finfo(np.float64).max
 SVO_MAIN_URL = 'http://svo2.cab.inta-csic.es/theory/fps/fps.php'
 
+
+def data_from_svo(query, error_msg='No data found for requested query'):
+    """Get data in response to the query send to SVO FPS
+
+    Parameters
+    ----------
+    query : dict
+        Used to create a HTTP query string i.e. send to SVO FPS to get data.
+        In dictionary, specify keys as search parameters (str) and 
+        values as required. List of search parameters can be found at 
+        http://svo2.cab.inta-csic.es/theory/fps/fps.php?FORMAT=metadata
+    error_msg : str, optional
+        Error message to be shown in case no table element found in the
+        responded VOTable. Use this to make error message verbose in context 
+        of the query made (default is 'No data found for requested query')
+
+    Returns
+    -------
+    astropy.io.votable.tree.Table object
+        Table element of the VOTable fetched from SVO (in response to query)
+    """   
+    response = requests.get(SVO_MAIN_URL, params=query)
+    response.raise_for_status()
+    votable = io.BytesIO(response.content)
+    try:
+        return parse_single_table(votable)
+    except IndexError:
+        # If no table element found in VOTable
+        raise ValueError(error_msg)
+
+
 def get_filter_index(wavelength_eff_min=0, wavelength_eff_max=FLOAT_MAX):
     """Get master list (index) of all filters at SVO
     Optional parameters can be given to get filters data for specified
@@ -32,14 +63,8 @@ def get_filter_index(wavelength_eff_min=0, wavelength_eff_max=FLOAT_MAX):
     wavelength_eff_max = u.Quantity(wavelength_eff_max, u.angstrom)
     query = {'WavelengthEff_min': wavelength_eff_min.value,
              'WavelengthEff_max': wavelength_eff_max.value}    
-    response = requests.get(SVO_MAIN_URL, params=query)
-    response.raise_for_status()
-    votable = io.BytesIO(response.content)
-    try:
-        return parse_single_table(votable)
-    except IndexError:
-        # If no table element found in VOTable
-        raise ValueError('No filter found for requested Wavelength Eff. range')
+    error_msg = 'No filter found for requested Wavelength Eff. range'
+    return data_from_svo(query, error_msg)
 
 
 def get_transmission_data(filter_id):
@@ -56,14 +81,8 @@ def get_transmission_data(filter_id):
         Table element of the VOTable fetched from SVO (in response to query)
     """
     query = {'ID': filter_id}
-    response = requests.get(SVO_MAIN_URL, params=query)
-    response.raise_for_status()
-    votable = io.BytesIO(response.content)
-    try:
-        return parse_single_table(votable)
-    except IndexError:
-        # If no table element found in VOTable
-        raise ValueError('No filter found for requested Filter ID')
+    error_msg = 'No filter found for requested Filter ID'
+    return data_from_svo(query, error_msg)
 
 
 def get_filter_list(facility, instrument=None):
@@ -84,11 +103,5 @@ def get_filter_list(facility, instrument=None):
     """
     query = {'Facility': facility, 
              'Instrument': instrument}
-    response = requests.get(SVO_MAIN_URL, params=query)
-    response.raise_for_status()
-    votable = io.BytesIO(response.content)
-    try:
-        return parse_single_table(votable)
-    except IndexError:
-        # If no table element found in VOTable
-        raise ValueError('No filter found for requested Facilty (and Instrument)')
+    error_msg = 'No filter found for requested Facilty (and Instrument)'
+    return data_from_svo(query, error_msg)
