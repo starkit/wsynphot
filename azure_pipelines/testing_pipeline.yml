@@ -39,5 +39,6 @@ steps:
 
   - bash: |
       source activate starkit
-      python setup.py test --coverage
+      python setup.py test --remote-data --coverage
+    # Use remote-data to run tests that require access to data from internet
     displayName: Test wsynphot
