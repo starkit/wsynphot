@@ -18,9 +18,10 @@ Installation
 2. Else if you are directly using wsynphot for 1st time, then:
 ::
 
-    $ curl -O https://raw.githubusercontent.com/starkit/starkit/master/starkit_env27.yml
-    $ conda env create --file starkit_env27.yml -n starkit
+    $ curl -O https://raw.githubusercontent.com/starkit/starkit/master/starkit_env3.yml
+    $ conda env create --file starkit_env3.yml -n starkit
     $ source activate starkit
+    $ pip install git+https://github.com/starkit/starkit  # some modules of wsynphot like spectrum1d need starkit, so it's better to have it installed already
     $ pip install git+https://github.com/starkit/wsynphot
 
 ~ For advanced uses, instead of ``pip installing`` package, you can clone the repository and use its ``setup.py`` file. Simply replace the ``$ pip install git+https://github.com/starkit/wsynphot`` used above, by following:
