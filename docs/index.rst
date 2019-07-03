@@ -1,11 +1,6 @@
-********
-Wsynphot
-********
+--------------------------------
+THE DOCUMENTATION HAS MOVED!!!!
+--------------------------------
 
-This is a package for doing synthetic photometry.
 
-.. toctree::
-  :maxdepth: 2
-
-  installation
-  quickstart
+See `<https://starkit.github.io/wsynphot>`_
