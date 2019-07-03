@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Installation &#8212; wsynphot v0.0.dev113</title>
+    <title>Installation &#8212; wsynphot v0.0.dev114</title>
     <link rel="stylesheet" href="_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -62,7 +62,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">wsynphot v0.0.dev113</a>
+	<a href="index.html">wsynphot v0.0.dev114</a>
 	 &#187;
       </li>
       
@@ -84,9 +84,10 @@ $ pip install git+https://github.com/starkit/wsynphot
 </pre></div>
 </div>
 <p>2. Else if you are directly using wsynphot for 1st time, then:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -O https://raw.githubusercontent.com/starkit/starkit/master/starkit_env27.yml
-$ conda env create --file starkit_env27.yml -n starkit
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -O https://raw.githubusercontent.com/starkit/starkit/master/starkit_env3.yml
+$ conda env create --file starkit_env3.yml -n starkit
 $ source activate starkit
+$ pip install git+https://github.com/starkit/starkit  # some modules of wsynphot like spectrum1d need starkit, so it&#39;s better to have it installed already
 $ pip install git+https://github.com/starkit/wsynphot
 </pre></div>
 </div>
