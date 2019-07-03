@@ -1,0 +1,19 @@
+name: starkit
+
+channels:
+    - conda-forge
+
+dependencies:
+- python=3.6
+- astropy=1
+
+# Documentation requirements
+
+- sphinx_bootstrap_theme=0.6
+- coveralls=1
+- sphinx=1
+- nbconvert=5
+- numpydoc=0.8
+- docutils=0.14
+- nbformat=4
+- nbsphinx=0.4
