@@ -67,12 +67,7 @@ setup_cfg = {str(k): str(v) for k, v in setup_cfg.items()} #Making sure parsed d
 
 
 exclude_patterns = ['_build', '**.ipynb_checkpoints']
-nbsphinx_prolog = """
-The notebook is available here: 
-https://github.com/starkit/wsynphot/tree/master/docs/{{ env.doc2path(env.docname, base=None) }}
 
-----
-"""
 nbsphinx_execute = 'never'
 exclude_patterns.append('_templates')
 
@@ -97,16 +92,11 @@ html_theme_options = {
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-__import__(setup_cfg['package_name'])
-package = sys.modules[setup_cfg['package_name']]
 
 # The short X.Y version.
-version = package.__version__.split('-', 1)[0]
+version = '-moved-documentation'
 # The full version, including alpha/beta/rc tags.
-release = package.__version__
-extensions += [
-    'nbsphinx',
-    ]
+release = '-moved-documentation'
 
 
 
