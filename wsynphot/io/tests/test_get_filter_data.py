@@ -1,6 +1,6 @@
 import pytest
 
-from .. import get_filter_data as gfd
+from wsynphot.io import get_filter_data as gfd
 
 def test_get_filter_index():
     table = gfd.get_filter_index()
