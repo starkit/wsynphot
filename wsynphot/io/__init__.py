@@ -1,1 +1,0 @@
-from .get_filter_data import svofps
