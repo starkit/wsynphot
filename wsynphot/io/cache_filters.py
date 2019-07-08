@@ -1,4 +1,6 @@
 import os, re
+from tqdm.autonotebook import tqdm
+# tqdm.autonotebook automatically chooses between console & notebook
 
 from wsynphot.io.get_filter_data import (get_filter_index,
     get_transmission_data)
@@ -40,17 +42,23 @@ def download_filter_data(cache_dir=CACHE_DIR):
         Path of the directory where downloaded data is to be cached 
     """
     # Get filter index and cache it
+    print("Caching filter index ...")
     index_table = get_filter_index().to_table()
     cache_as_votable(index_table,
         os.path.join(cache_dir, 'index'))
 
-    # Fetch filter_ids from index & iterate
-    for filter_id in index_table['filterID']:
+    # Fetch filter_ids from index as an iterator decorated with progress bar
+    print("Caching transmission data ...")
+    filter_ids_pbar = tqdm(index_table['filterID'], desc='Filter ID',
+        total=len(index_table))
+
+    # Iterate over each filter_id in the generated iterator
+    for filter_id in filter_ids_pbar:
         filter_id = filter_id.decode("utf-8")  # convert byte string to literal
-        
+        filter_ids_pbar.set_postfix_str(filter_id)
+
         # Get transmission data for a filter_id and cache it
         try:
-            print("caching {0} ...".format(filter_id))
             facility, instrument, filter_name = re.split('/|\.', filter_id)
             filter_table = get_transmission_data(filter_id).to_table()
             cache_as_votable(filter_table,
