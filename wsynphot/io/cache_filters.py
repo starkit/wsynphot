@@ -1,6 +1,9 @@
 import os, re
-from tqdm.autonotebook import tqdm
+import numpy as np
+
 # tqdm.autonotebook automatically chooses between console & notebook
+from tqdm.autonotebook import tqdm
+from astropy.io.votable import parse_single_table
 
 from wsynphot.io.get_filter_data import (get_filter_index,
     get_transmission_data)
@@ -66,3 +69,93 @@ def download_filter_data(cache_dir=CACHE_DIR):
         except Exception as e:
             print('Data for Filter ID = {0} could not be downloaded due '
                 'to:\n{1}'.format(filter_id, e))
+
+
+def load_filter_index(cache_dir=CACHE_DIR):
+    """Loads filter index from the cached filter data present on disk as a
+    pandas dataframe.
+
+    Parameters
+    ----------
+    cache_dir : str, optional
+        Path of the directory where downloaded data is to be cached 
+
+    Returns
+    -------
+    pandas.core.frame.DataFrame
+        Filter index loaded as a dataframe
+    """
+    filter_index_loc = os.path.join(cache_dir, 'index.vot')
+    error_msg = 'No filter index found'
+    return df_from_votable(filter_index_loc, error_msg)
+
+
+def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
+    """Loads transmission data for requested Filter ID from the cached filter 
+    data present on disk as a pandas dataframe.
+
+    Parameters
+    ----------
+    filter_id : str
+        Filter ID in either wsynphot format: 'facilty/instrument/filter' 
+        or SVO format: 'facilty/instrument.filter' (Can use '/' and '.' 
+        interchangeably as delimiters)
+    cache_dir : str, optional
+        Path of the directory where downloaded data is to be cached 
+
+    Returns
+    -------
+    pandas.core.frame.DataFrame
+        Filter's transmission data loaded as a dataframe
+    """
+    facility, instrument, filter_name = re.split('/|\.', filter_id)
+    transmission_data_loc = os.path.join(cache_dir, facility, instrument,
+        '{0}.vot'.format(filter_name))
+    error_msg = 'No filter found for requested Filter ID'
+    return df_from_votable(transmission_data_loc, error_msg)
+
+
+def df_from_votable(votable_path, error_msg):
+    """Parses the passed VOTable to produce data in a usable table format as 
+    pandas dataframe.
+
+    Parameters
+    ----------
+    votable_path : str
+        Path where VOTable to be used is stored. Make sure passed VOTable is 
+        properly formatted, since this is "not" a general purpose function.
+    error_msg : str
+        Error message to be shown in case no VOTable exists for the passed
+        path. Use this to make error message verbose in context of the 
+        VOTable passed.
+
+    Returns
+    -------
+    pandas.core.frame.DataFrame
+        Parsed data as a dataframe
+    """
+    # When no such votable is present
+    if not os.path.exists(votable_path):
+        raise ValueError(error_msg)
+
+    # Parse VOTable & convert it to Dataframe
+    table = parse_single_table(votable_path).to_table()
+    df = table.to_pandas()
+    return byte_to_literal_strings(df)
+
+
+def byte_to_literal_strings(dataframe):
+    """Converts byte strings (if any) present in passed dataframe to literal
+    strings and returns an improved dataframe.
+    """
+    # Select the str columns:
+    str_df = dataframe.select_dtypes([np.object])
+    
+    if not str_df.empty:
+        # Convert all of them into unicode strings
+        str_df = str_df.stack().str.decode('utf-8').unstack()
+        # Swap out converted cols with the original df cols
+        for col in str_df:
+            dataframe[col] = str_df[col]
+    
+    return dataframe
