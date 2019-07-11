@@ -10,4 +10,4 @@ This is a package for doing synthetic photometry.
 
   installation
   quickstart
-  io/*
+  io/index.rst
