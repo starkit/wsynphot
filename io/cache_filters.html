@@ -1,0 +1,2285 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Using cache_filters (cf) module &#8212; wsynphot v0.0.dev124</title>
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Using get_filter_data (gfd) module" href="get_filter_data.html" />
+<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+<script type="text/javascript" src="../_static/copybutton.js"></script>
+
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../index.html"><span id="logotext1">W</span><span id="logotext2">Synphot</span><span id="logotext3">:documentation</span></a>
+  <ul>
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li class="right">
+	<a href="get_filter_data.html" title="Using get_filter_data (gfd) module">
+	  &laquo; previous
+	</a>
+	
+      </li>
+      <li>
+	<a href="../index.html">wsynphot v0.0.dev124</a>
+	 &#187;
+      </li>
+      <li><a href="index.html" accesskey="U">Input/Output</a> &#187;</li>
+      
+      <li>Using cache_filters (cf) module</li> 
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput,
+div.nbinput div.prompt,
+div.nbinput div.input_area,
+div.nbinput div[class*=highlight],
+div.nbinput div[class*=highlight] pre,
+div.nboutput,
+div.nbinput div.prompt,
+div.nbinput div.output_area,
+div.nboutput div[class*=highlight],
+div.nboutput div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput,
+div.nboutput {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput,
+    div.nboutput {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput div.prompt,
+div.nboutput div.prompt {
+    min-width: 7ex;
+    padding-top: 0.4em;
+    padding-right: 0.4em;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput div.prompt,
+    div.nboutput div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput div.prompt pre,
+div.nboutput div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput div.input_area,
+div.nboutput div.output_area {
+    padding: 0.4em;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput div.input_area,
+    div.nboutput div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<p>The notebook is available here:
+<a class="reference external" href="https://github.com/starkit/wsynphot/tree/master/docs/io/cache_filters.ipynb">https://github.com/starkit/wsynphot/tree/master/docs/io/cache_filters.ipynb</a></p>
+<hr class="docutils" />
+<div class="section" id="Using-cache_filters-(cf)-module">
+<h1>Using cache_filters (cf) module<a class="headerlink" href="#Using-cache_filters-(cf)-module" title="Permalink to this headline">¶</a></h1>
+<p>It lets you to download the filter data fromn SVO FPS and save it locally on disk as cache, so that you can access it faster. Hence you can even use wsynphot package offline as per your convinience. It also provides functions to load the required filter data from the cache instantaneously.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">wsynphot.io.cache_filters</span> <span class="k">as</span> <span class="nn">cf</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[<span class="ansi-bold">py.warnings         </span>][<span class="ansi-yellow-intense-fg ansi-bold">WARNING</span>]  /home/jpolygon/miniconda3/envs/sktest2/lib/python3.6/site-packages/tqdm/autonotebook/__init__.py:14: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)
+  &#34; (e.g. in jupyter console)&#34;, TqdmExperimentalWarning)
+ (<span class="ansi-bold">warnings.py</span>:99)
+</pre></div></div>
+</div>
+<div class="section" id="Download-filter-data">
+<h2>Download filter data<a class="headerlink" href="#Download-filter-data" title="Permalink to this headline">¶</a></h2>
+<p>This saves the filter data on your disk as cache - providing you offline access.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">cf</span><span class="o">.</span><span class="n">download_filter_data</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Caching filter index ...
+[<span class="ansi-bold">py.warnings         </span>][<span class="ansi-yellow-intense-fg ansi-bold">WARNING</span>]  /home/jpolygon/miniconda3/envs/sktest2/lib/python3.6/site-packages/astropy/io/votable/tree.py:3369: W42: None:2:0: W42: No XML namespace specified
+  vo_warn(W42, (), config, pos)
+ (<span class="ansi-bold">warnings.py</span>:99)
+[<span class="ansi-yellow-intense-fg ansi-bold">WARNING</span>] [<span class="ansi-bold">py.warnings         </span>] /home/jpolygon/miniconda3/envs/sktest2/lib/python3.6/site-packages/astropy/io/votable/tree.py:3369: W42: None:2:0: W42: No XML namespace specified
+  vo_warn(W42, (), config, pos)
+ (<span class="ansi-bold">warnings.py</span>:99)
+Caching transmission data ...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "51bf5c90bcf74c60a4bf561bdbffd973", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Load-Filter-index-from-cache">
+<h2>Load Filter index from cache<a class="headerlink" href="#Load-Filter-index-from-cache" title="Permalink to this headline">¶</a></h2>
+<p>Provides master list of all available filters along with their properties as a dataframe.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">cf</span><span class="o">.</span><span class="n">load_filter_index</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[<span class="ansi-bold">py.warnings         </span>][<span class="ansi-yellow-intense-fg ansi-bold">WARNING</span>]  /home/jpolygon/miniconda3/envs/sktest2/lib/python3.6/site-packages/astropy/io/votable/tree.py:283: W06: /home/jpolygon/Downloads/wsynphot/cached_SVO_FPS/index.vot:15:3: W06: Invalid UCD &#39;instr.obsty&#39;: Secondary word &#39;instr.obsty&#39; is not valid as a primary word
+  vo_warn(W06, (ucd, six.text_type(e)), config, pos)
+ (<span class="ansi-bold">warnings.py</span>:99)
+[<span class="ansi-yellow-intense-fg ansi-bold">WARNING</span>] [<span class="ansi-bold">py.warnings         </span>] /home/jpolygon/miniconda3/envs/sktest2/lib/python3.6/site-packages/astropy/io/votable/tree.py:283: W06: /home/jpolygon/Downloads/wsynphot/cached_SVO_FPS/index.vot:15:3: W06: Invalid UCD &#39;instr.obsty&#39;: Secondary word &#39;instr.obsty&#39; is not valid as a primary word
+  vo_warn(W06, (ucd, six.text_type(e)), config, pos)
+ (<span class="ansi-bold">warnings.py</span>:99)
+[<span class="ansi-bold">py.warnings         </span>][<span class="ansi-yellow-intense-fg ansi-bold">WARNING</span>]  /home/jpolygon/miniconda3/envs/sktest2/lib/python3.6/site-packages/astropy/io/votable/tree.py:283: W06: /home/jpolygon/Downloads/wsynphot/cached_SVO_FPS/index.vot:37:3: W06: Invalid UCD &#39;DATA_LINK&#39;: Unknown word &#39;DATA_LINK&#39;
+  vo_warn(W06, (ucd, six.text_type(e)), config, pos)
+ (<span class="ansi-bold">warnings.py</span>:99)
+[<span class="ansi-yellow-intense-fg ansi-bold">WARNING</span>] [<span class="ansi-bold">py.warnings         </span>] /home/jpolygon/miniconda3/envs/sktest2/lib/python3.6/site-packages/astropy/io/votable/tree.py:283: W06: /home/jpolygon/Downloads/wsynphot/cached_SVO_FPS/index.vot:37:3: W06: Invalid UCD &#39;DATA_LINK&#39;: Unknown word &#39;DATA_LINK&#39;
+  vo_warn(W06, (ucd, six.text_type(e)), config, pos)
+ (<span class="ansi-bold">warnings.py</span>:99)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>FilterProfileService</th>
+      <th>filterID</th>
+      <th>WavelengthUnit</th>
+      <th>WavelengthUCD</th>
+      <th>PhotSystem</th>
+      <th>DetectorType</th>
+      <th>Band</th>
+      <th>Instrument</th>
+      <th>Facility</th>
+      <th>ProfileReference</th>
+      <th>...</th>
+      <th>WavelengthPhot</th>
+      <th>FWHM</th>
+      <th>PhotCalID</th>
+      <th>MagSys</th>
+      <th>ZeroPoint</th>
+      <th>ZeroPointUnit</th>
+      <th>Mag0</th>
+      <th>ZeroPointType</th>
+      <th>AsinhSoft</th>
+      <th>TrasmissionCurve</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ivo://svo/fps</td>
+      <td>IUE/IUE.1250-1300</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>IUE</td>
+      <td>0</td>
+      <td></td>
+      <td></td>
+      <td>IUE</td>
+      <td></td>
+      <td>...</td>
+      <td>1.284802e+03</td>
+      <td>5.100000e+01</td>
+      <td>IUE/IUE.1250-1300/Vega</td>
+      <td>Vega</td>
+      <td>78.500328</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/ACS_SBC.F122M</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ACS_SBC</td>
+      <td>0</td>
+      <td></td>
+      <td>ACS</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/acs/analysis/zeropoints</td>
+      <td>...</td>
+      <td>1.415624e+03</td>
+      <td>1.035811e+02</td>
+      <td>HST/ACS_SBC.F122M/Vega</td>
+      <td>Vega</td>
+      <td>114.341072</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1360</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.360629e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1360/Vega</td>
+      <td>Vega</td>
+      <td>305.763611</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1380</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.380699e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1380/Vega</td>
+      <td>Vega</td>
+      <td>333.016724</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/TD1.140</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td></td>
+      <td>...</td>
+      <td>1.403559e+03</td>
+      <td>1.000010e+02</td>
+      <td>TD1/TD1.140/Vega</td>
+      <td>Vega</td>
+      <td>368.054199</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/NARROW1.1400</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://ulisse.pd.astro.it/Astro/ADPS/ADPS2/Fil...</td>
+      <td>...</td>
+      <td>1.403563e+03</td>
+      <td>1.000000e+02</td>
+      <td>TD1/NARROW1.1400/Vega</td>
+      <td>Vega</td>
+      <td>368.077026</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1400</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.400882e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1400/Vega</td>
+      <td>Vega</td>
+      <td>365.678650</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1420</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.420684e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1420/Vega</td>
+      <td>Vega</td>
+      <td>404.690247</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/ACS_SBC.F115LP</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ACS_SBC</td>
+      <td>0</td>
+      <td></td>
+      <td>ACS</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/acs/analysis/zeropoints</td>
+      <td>...</td>
+      <td>1.522224e+03</td>
+      <td>3.768554e+02</td>
+      <td>HST/ACS_SBC.F115LP/Vega</td>
+      <td>Vega</td>
+      <td>343.100098</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1440</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.440709e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1440/Vega</td>
+      <td>Vega</td>
+      <td>442.357727</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/TD1.146</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td></td>
+      <td>...</td>
+      <td>1.457379e+03</td>
+      <td>1.100010e+02</td>
+      <td>TD1/TD1.146/Vega</td>
+      <td>Vega</td>
+      <td>455.833679</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/NARROW2.1455</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://ulisse.pd.astro.it/Astro/ADPS/ADPS2/Fil...</td>
+      <td>...</td>
+      <td>1.457380e+03</td>
+      <td>1.100000e+02</td>
+      <td>TD1/NARROW2.1455/Vega</td>
+      <td>Vega</td>
+      <td>455.819611</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/ACS_SBC.PR110L</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ACS_SBC</td>
+      <td>0</td>
+      <td></td>
+      <td>ACS</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/acs/analysis/zeropoints</td>
+      <td>...</td>
+      <td>1.528501e+03</td>
+      <td>3.863476e+02</td>
+      <td>HST/ACS_SBC.PR110L/Vega</td>
+      <td>Vega</td>
+      <td>376.796417</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1460</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.460012e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1460/Vega</td>
+      <td>Vega</td>
+      <td>465.783966</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/ACS_SBC.F125LP</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ACS_SBC</td>
+      <td>0</td>
+      <td></td>
+      <td>ACS</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/acs/analysis/zeropoints</td>
+      <td>...</td>
+      <td>1.521558e+03</td>
+      <td>3.389823e+02</td>
+      <td>HST/ACS_SBC.F125LP/Vega</td>
+      <td>Vega</td>
+      <td>387.348114</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/ACS_SBC.PR130L</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ACS_SBC</td>
+      <td>0</td>
+      <td></td>
+      <td>ACS</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/acs/analysis/zeropoints</td>
+      <td>...</td>
+      <td>1.523507e+03</td>
+      <td>3.388215e+02</td>
+      <td>HST/ACS_SBC.PR130L/Vega</td>
+      <td>Vega</td>
+      <td>388.584412</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>ivo://svo/fps</td>
+      <td>IUE/IUE.1450-1500</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>IUE</td>
+      <td>0</td>
+      <td></td>
+      <td></td>
+      <td>IUE</td>
+      <td></td>
+      <td>...</td>
+      <td>1.475382e+03</td>
+      <td>5.100000e+01</td>
+      <td>IUE/IUE.1450-1500/Vega</td>
+      <td>Vega</td>
+      <td>484.238220</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1480</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.480555e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1480/Vega</td>
+      <td>Vega</td>
+      <td>481.924133</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>ivo://svo/fps</td>
+      <td>Astrosat/UVIT.F148W</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>UVIT</td>
+      <td>0</td>
+      <td></td>
+      <td>UVIT</td>
+      <td>Astrosat</td>
+      <td>http://uvit.iiap.res.in/Instrument/Filters</td>
+      <td>...</td>
+      <td>1.537395e+03</td>
+      <td>4.890270e+02</td>
+      <td>Astrosat/UVIT.F148W/Vega</td>
+      <td>Vega</td>
+      <td>445.547974</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>ivo://svo/fps</td>
+      <td>Astrosat/UVIT.F148Wa</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>UVIT</td>
+      <td>0</td>
+      <td></td>
+      <td>UVIT</td>
+      <td>Astrosat</td>
+      <td>http://uvit.iiap.res.in/Instrument/Filters</td>
+      <td>...</td>
+      <td>1.541436e+03</td>
+      <td>4.879972e+02</td>
+      <td>Astrosat/UVIT.F148Wa/Vega</td>
+      <td>Vega</td>
+      <td>451.758881</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/TD1.150</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td></td>
+      <td>...</td>
+      <td>1.501024e+03</td>
+      <td>1.000010e+02</td>
+      <td>TD1/TD1.150/Vega</td>
+      <td>Vega</td>
+      <td>507.073273</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/NARROW1.1500</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://ulisse.pd.astro.it/Astro/ADPS/ADPS2/Fil...</td>
+      <td>...</td>
+      <td>1.501025e+03</td>
+      <td>1.000000e+02</td>
+      <td>TD1/NARROW1.1500/Vega</td>
+      <td>Vega</td>
+      <td>507.096558</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1500</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.500246e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1500/Vega</td>
+      <td>Vega</td>
+      <td>514.445007</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/WFPC2.f160bw</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td></td>
+      <td>0</td>
+      <td></td>
+      <td>WFPC2</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/wfpc2/analysis/filter...</td>
+      <td>...</td>
+      <td>1.589646e+03</td>
+      <td>6.134933e+02</td>
+      <td>HST/WFPC2.f160bw/Vega</td>
+      <td>Vega</td>
+      <td>423.670471</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1520</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.520053e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1520/Vega</td>
+      <td>Vega</td>
+      <td>524.650085</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/WFPC2.f157w</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td></td>
+      <td>0</td>
+      <td></td>
+      <td>WFPC2</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/wfpc2/analysis/filter...</td>
+      <td>...</td>
+      <td>1.554911e+03</td>
+      <td>3.710513e+02</td>
+      <td>HST/WFPC2.f157w/Vega</td>
+      <td>Vega</td>
+      <td>476.138306</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>ivo://svo/fps</td>
+      <td>GALEX/GALEX.FUV</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>GALEX</td>
+      <td>0</td>
+      <td></td>
+      <td></td>
+      <td>GALEX</td>
+      <td>http://galexgi.gsfc.nasa.gov/docs/galex/Docume...</td>
+      <td>...</td>
+      <td>1.549019e+03</td>
+      <td>2.278145e+02</td>
+      <td>GALEX/GALEX.FUV/Vega</td>
+      <td>Vega</td>
+      <td>514.975342</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>ivo://svo/fps</td>
+      <td>TD1/SPEC.F1540</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>TD1</td>
+      <td>0</td>
+      <td></td>
+      <td>TD1</td>
+      <td>TD1</td>
+      <td>http://adsabs.harvard.edu/abs/1976A%26A....49....</td>
+      <td>...</td>
+      <td>1.540070e+03</td>
+      <td>3.493550e+01</td>
+      <td>TD1/SPEC.F1540/Vega</td>
+      <td>Vega</td>
+      <td>538.214844</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>ivo://svo/fps</td>
+      <td>Astrosat/UVIT.F154W</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>UVIT</td>
+      <td>0</td>
+      <td></td>
+      <td>UVIT</td>
+      <td>Astrosat</td>
+      <td>http://uvit.iiap.res.in/Instrument/Filters</td>
+      <td>...</td>
+      <td>1.568831e+03</td>
+      <td>3.858952e+02</td>
+      <td>Astrosat/UVIT.F154W/Vega</td>
+      <td>Vega</td>
+      <td>524.148682</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>ivo://svo/fps</td>
+      <td>HST/ACS_SBC.F140LP</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ACS_SBC</td>
+      <td>0</td>
+      <td></td>
+      <td>ACS</td>
+      <td>HST</td>
+      <td>http://www.stsci.edu/hst/acs/analysis/zeropoints</td>
+      <td>...</td>
+      <td>1.559822e+03</td>
+      <td>2.454278e+02</td>
+      <td>HST/ACS_SBC.F140LP/Vega</td>
+      <td>Vega</td>
+      <td>506.028046</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>4617</th>
+      <td>ivo://svo/fps</td>
+      <td>Spitzer/MIPS.70mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>MIPS</td>
+      <td>0</td>
+      <td></td>
+      <td>MIPS</td>
+      <td>Spitzer</td>
+      <td>http://ssc.spitzer.caltech.edu/mips/spectral_r...</td>
+      <td>...</td>
+      <td>6.936470e+05</td>
+      <td>1.898351e+05</td>
+      <td>Spitzer/MIPS.70mu/Vega</td>
+      <td>Vega</td>
+      <td>0.769955</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4618</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.70mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>7.455638e+05</td>
+      <td>2.163768e+05</td>
+      <td>ISO/PHT-C.70mu/Vega</td>
+      <td>Vega</td>
+      <td>0.636514</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4619</th>
+      <td>ivo://svo/fps</td>
+      <td>AKARI/FIS.WIDE-S</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>FIS</td>
+      <td>0</td>
+      <td></td>
+      <td>FIS</td>
+      <td>AKARI</td>
+      <td>http://www.ir.isas.jaxa.jp/AKARI/Observation/R...</td>
+      <td>...</td>
+      <td>8.036109e+05</td>
+      <td>2.707058e+05</td>
+      <td>AKARI/FIS.WIDE-S/Vega</td>
+      <td>Vega</td>
+      <td>0.515878</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4620</th>
+      <td>ivo://svo/fps</td>
+      <td>SOFIA/HAWC.C</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td></td>
+      <td>0</td>
+      <td></td>
+      <td>HAWC</td>
+      <td>SOFIA</td>
+      <td>https://www.sofia.usra.edu/science/proposing-a...</td>
+      <td>...</td>
+      <td>8.835179e+05</td>
+      <td>1.704136e+05</td>
+      <td>SOFIA/HAWC.C/Vega</td>
+      <td>Vega</td>
+      <td>0.490535</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4621</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.90mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>8.544859e+05</td>
+      <td>3.841473e+05</td>
+      <td>ISO/PHT-C.90mu/Vega</td>
+      <td>Vega</td>
+      <td>0.455685</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4622</th>
+      <td>ivo://svo/fps</td>
+      <td>COBE/DIRBE.100m</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>DIRBE</td>
+      <td>0</td>
+      <td></td>
+      <td>DIRBE</td>
+      <td>COBE</td>
+      <td>https://lambda.gsfc.nasa.gov/product/cobe/c_sp...</td>
+      <td>...</td>
+      <td>9.412082e+05</td>
+      <td>3.097860e+05</td>
+      <td>COBE/DIRBE.100m/Vega</td>
+      <td>Vega</td>
+      <td>0.406927</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4623</th>
+      <td>ivo://svo/fps</td>
+      <td>IRAS/IRAS.100mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>IRAS</td>
+      <td>0</td>
+      <td></td>
+      <td></td>
+      <td>IRAS</td>
+      <td>http://irsa.ipac.caltech.edu/IRASdocs/exp.sup/...</td>
+      <td>...</td>
+      <td>9.694183e+05</td>
+      <td>3.222499e+05</td>
+      <td>IRAS/IRAS.100mu/Vega</td>
+      <td>Vega</td>
+      <td>0.386524</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4624</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-P.100mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>9.824935e+05</td>
+      <td>3.004847e+05</td>
+      <td>ISO/PHT-P.100mu/Vega</td>
+      <td>Vega</td>
+      <td>0.380426</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4625</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.100mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>9.678518e+05</td>
+      <td>3.355158e+05</td>
+      <td>ISO/PHT-C.100mu/Vega</td>
+      <td>Vega</td>
+      <td>0.383468</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4626</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/Pacs.green</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>Herschel</td>
+      <td>0</td>
+      <td></td>
+      <td>Pacs</td>
+      <td>Herschel</td>
+      <td>https://nhscsci.ipac.caltech.edu/sc/index.php/...</td>
+      <td>...</td>
+      <td>9.901764e+05</td>
+      <td>3.568660e+05</td>
+      <td>Herschel/Pacs.green/Vega</td>
+      <td>Vega</td>
+      <td>0.378392</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4627</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.105mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>1.032345e+06</td>
+      <td>2.100148e+05</td>
+      <td>ISO/PHT-C.105mu/Vega</td>
+      <td>Vega</td>
+      <td>0.345418</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4628</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.120mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>1.124067e+06</td>
+      <td>2.165200e+05</td>
+      <td>ISO/PHT-C.120mu/Vega</td>
+      <td>Vega</td>
+      <td>0.283105</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4629</th>
+      <td>ivo://svo/fps</td>
+      <td>AKARI/FIS.WIDE-L</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>FIS</td>
+      <td>0</td>
+      <td></td>
+      <td>FIS</td>
+      <td>AKARI</td>
+      <td>http://www.ir.isas.jaxa.jp/AKARI/Observation/R...</td>
+      <td>...</td>
+      <td>1.429926e+06</td>
+      <td>3.894922e+05</td>
+      <td>AKARI/FIS.WIDE-L/Vega</td>
+      <td>Vega</td>
+      <td>0.176714</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4630</th>
+      <td>ivo://svo/fps</td>
+      <td>COBE/DIRBE.140m</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>DIRBE</td>
+      <td>0</td>
+      <td></td>
+      <td>DIRBE</td>
+      <td>COBE</td>
+      <td>https://lambda.gsfc.nasa.gov/product/cobe/c_sp...</td>
+      <td>...</td>
+      <td>1.420013e+06</td>
+      <td>3.514022e+05</td>
+      <td>COBE/DIRBE.140m/Vega</td>
+      <td>Vega</td>
+      <td>0.176088</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4631</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.135mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>1.453382e+06</td>
+      <td>4.405572e+05</td>
+      <td>ISO/PHT-C.135mu/Vega</td>
+      <td>Vega</td>
+      <td>0.167201</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4632</th>
+      <td>ivo://svo/fps</td>
+      <td>SOFIA/HAWC.D</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td></td>
+      <td>0</td>
+      <td></td>
+      <td>HAWC</td>
+      <td>SOFIA</td>
+      <td>https://www.sofia.usra.edu/science/proposing-a...</td>
+      <td>...</td>
+      <td>1.536151e+06</td>
+      <td>3.394504e+05</td>
+      <td>SOFIA/HAWC.D/Vega</td>
+      <td>Vega</td>
+      <td>0.158686</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4633</th>
+      <td>ivo://svo/fps</td>
+      <td>Spitzer/MIPS.160mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>MIPS</td>
+      <td>0</td>
+      <td></td>
+      <td>MIPS</td>
+      <td>Spitzer</td>
+      <td>http://ssc.spitzer.caltech.edu/mips/spectral_r...</td>
+      <td>...</td>
+      <td>1.536888e+06</td>
+      <td>3.454720e+05</td>
+      <td>Spitzer/MIPS.160mu/Vega</td>
+      <td>Vega</td>
+      <td>0.157904</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4634</th>
+      <td>ivo://svo/fps</td>
+      <td>AKARI/FIS.N160</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>FIS</td>
+      <td>0</td>
+      <td></td>
+      <td>FIS</td>
+      <td>AKARI</td>
+      <td>http://www.ir.isas.jaxa.jp/AKARI/Observation/R...</td>
+      <td>...</td>
+      <td>1.603095e+06</td>
+      <td>3.327812e+05</td>
+      <td>AKARI/FIS.N160/Vega</td>
+      <td>Vega</td>
+      <td>0.145898</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4635</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/Pacs.red</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>Herschel</td>
+      <td>0</td>
+      <td></td>
+      <td>Pacs</td>
+      <td>Herschel</td>
+      <td>https://nhscsci.ipac.caltech.edu/sc/index.php/...</td>
+      <td>...</td>
+      <td>1.569063e+06</td>
+      <td>7.495406e+05</td>
+      <td>Herschel/Pacs.red/Vega</td>
+      <td>Vega</td>
+      <td>0.143548</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4636</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.160mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>1.597013e+06</td>
+      <td>5.584378e+05</td>
+      <td>ISO/PHT-C.160mu/Vega</td>
+      <td>Vega</td>
+      <td>0.134895</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4637</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.180mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>1.742852e+06</td>
+      <td>4.259885e+05</td>
+      <td>ISO/PHT-C.180mu/Vega</td>
+      <td>Vega</td>
+      <td>0.119502</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4638</th>
+      <td>ivo://svo/fps</td>
+      <td>ISO/PHT-C.200mu</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>ISO</td>
+      <td>0</td>
+      <td></td>
+      <td>PHT</td>
+      <td>ISO</td>
+      <td>http://general-tools.cosmos.esa.int/iso/manual...</td>
+      <td>...</td>
+      <td>1.979992e+06</td>
+      <td>2.962398e+05</td>
+      <td>ISO/PHT-C.200mu/Vega</td>
+      <td>Vega</td>
+      <td>0.094259</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4639</th>
+      <td>ivo://svo/fps</td>
+      <td>SOFIA/HAWC.E</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td></td>
+      <td>0</td>
+      <td></td>
+      <td>HAWC</td>
+      <td>SOFIA</td>
+      <td>https://www.sofia.usra.edu/science/proposing-a...</td>
+      <td>...</td>
+      <td>2.123903e+06</td>
+      <td>4.403009e+05</td>
+      <td>SOFIA/HAWC.E/Vega</td>
+      <td>Vega</td>
+      <td>0.082318</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4640</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/SPIRE.PSW</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>SPIRE</td>
+      <td>0</td>
+      <td></td>
+      <td>SPIRE</td>
+      <td>Herschel</td>
+      <td>http://herschel.esac.esa.int/Docs/SPIRE/html/s...</td>
+      <td>...</td>
+      <td>2.449650e+06</td>
+      <td>7.770002e+05</td>
+      <td>Herschel/SPIRE.PSW/Vega</td>
+      <td>Vega</td>
+      <td>0.060750</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4641</th>
+      <td>ivo://svo/fps</td>
+      <td>COBE/DIRBE.240m</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>DIRBE</td>
+      <td>0</td>
+      <td></td>
+      <td>DIRBE</td>
+      <td>COBE</td>
+      <td>https://lambda.gsfc.nasa.gov/product/cobe/c_sp...</td>
+      <td>...</td>
+      <td>2.353122e+06</td>
+      <td>1.008312e+06</td>
+      <td>COBE/DIRBE.240m/Vega</td>
+      <td>Vega</td>
+      <td>0.061681</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4642</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/SPIRE.PSW_ext</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>SPIRE</td>
+      <td>0</td>
+      <td></td>
+      <td>SPIRE</td>
+      <td>Herschel</td>
+      <td>http://herschel.esac.esa.int/Docs/SPIRE/html/s...</td>
+      <td>...</td>
+      <td>2.492830e+06</td>
+      <td>6.589304e+05</td>
+      <td>Herschel/SPIRE.PSW_ext/Vega</td>
+      <td>Vega</td>
+      <td>0.058680</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4643</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/SPIRE.PMW</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>SPIRE</td>
+      <td>0</td>
+      <td></td>
+      <td>SPIRE</td>
+      <td>Herschel</td>
+      <td>http://herschel.esac.esa.int/Docs/SPIRE/html/s...</td>
+      <td>...</td>
+      <td>3.437871e+06</td>
+      <td>1.059688e+06</td>
+      <td>Herschel/SPIRE.PMW/Vega</td>
+      <td>Vega</td>
+      <td>0.030295</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4644</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/SPIRE.PMW_ext</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>SPIRE</td>
+      <td>0</td>
+      <td></td>
+      <td>SPIRE</td>
+      <td>Herschel</td>
+      <td>http://herschel.esac.esa.int/Docs/SPIRE/html/s...</td>
+      <td>...</td>
+      <td>3.496571e+06</td>
+      <td>9.371992e+05</td>
+      <td>Herschel/SPIRE.PMW_ext/Vega</td>
+      <td>Vega</td>
+      <td>0.029263</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4645</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/SPIRE.PLW</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>SPIRE</td>
+      <td>0</td>
+      <td></td>
+      <td>SPIRE</td>
+      <td>Herschel</td>
+      <td>http://herschel.esac.esa.int/Docs/SPIRE/html/s...</td>
+      <td>...</td>
+      <td>4.890142e+06</td>
+      <td>1.998631e+06</td>
+      <td>Herschel/SPIRE.PLW/Vega</td>
+      <td>Vega</td>
+      <td>0.014141</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+    <tr>
+      <th>4646</th>
+      <td>ivo://svo/fps</td>
+      <td>Herschel/SPIRE.PLW_ext</td>
+      <td>Angstrom</td>
+      <td>em.wl</td>
+      <td>SPIRE</td>
+      <td>0</td>
+      <td></td>
+      <td>SPIRE</td>
+      <td>Herschel</td>
+      <td>http://herschel.esac.esa.int/Docs/SPIRE/html/s...</td>
+      <td>...</td>
+      <td>5.034501e+06</td>
+      <td>1.848042e+06</td>
+      <td>Herschel/SPIRE.PLW_ext/Vega</td>
+      <td>Vega</td>
+      <td>0.013288</td>
+      <td>Jy</td>
+      <td>0.0</td>
+      <td>Pogson</td>
+      <td>0.0</td>
+      <td>http://svo2.cab.inta-csic.es//theory/fps/fps.p...</td>
+    </tr>
+  </tbody>
+</table>
+<p>4647 rows × 31 columns</p>
+</div></div>
+</div>
+</div>
+<div class="section" id="Load-transmission-data-of-a-Filter-from-cache">
+<h2>Load transmission data of a Filter from cache<a class="headerlink" href="#Load-transmission-data-of-a-Filter-from-cache" title="Permalink to this headline">¶</a></h2>
+<p>Provides transmission data for the requested <em>Filter ID</em> as a dataframe - which can be used to plot <strong>Filter Curves</strong>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">cf</span><span class="o">.</span><span class="n">load_transmission_data</span><span class="p">(</span><span class="s1">&#39;Keck/NIRC2/Kp&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Wavelength</th>
+      <th>Transmission</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>19044.839844</td>
+      <td>0.005075</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>19048.699219</td>
+      <td>0.005073</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>19052.570312</td>
+      <td>0.005071</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>19056.439453</td>
+      <td>0.005069</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>19060.310547</td>
+      <td>0.005068</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>19064.179688</td>
+      <td>0.005066</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>19068.050781</td>
+      <td>0.005064</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>19071.919922</td>
+      <td>0.005062</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>19075.789062</td>
+      <td>0.005060</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>19075.800781</td>
+      <td>0.006175</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>19079.669922</td>
+      <td>0.006173</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>19083.539062</td>
+      <td>0.006171</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>19087.410156</td>
+      <td>0.006169</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>19091.279297</td>
+      <td>0.006168</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>19091.300781</td>
+      <td>0.007282</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>19095.160156</td>
+      <td>0.007281</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>19099.029297</td>
+      <td>0.007279</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>19102.900391</td>
+      <td>0.007277</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>19106.769531</td>
+      <td>0.007275</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>19106.789062</td>
+      <td>0.008390</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>19110.660156</td>
+      <td>0.008388</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>19114.529297</td>
+      <td>0.008386</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>19118.390625</td>
+      <td>0.008384</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>19122.259766</td>
+      <td>0.008382</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>19122.279297</td>
+      <td>0.009497</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>19126.150391</td>
+      <td>0.009495</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>19130.019531</td>
+      <td>0.009494</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>19133.890625</td>
+      <td>0.009492</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>19133.900391</td>
+      <td>0.010607</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>19137.769531</td>
+      <td>0.010605</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>1573</th>
+      <td>23262.810547</td>
+      <td>0.019782</td>
+    </tr>
+    <tr>
+      <th>1574</th>
+      <td>23266.679688</td>
+      <td>0.019780</td>
+    </tr>
+    <tr>
+      <th>1575</th>
+      <td>23270.529297</td>
+      <td>0.018664</td>
+    </tr>
+    <tr>
+      <th>1576</th>
+      <td>23274.400391</td>
+      <td>0.018662</td>
+    </tr>
+    <tr>
+      <th>1577</th>
+      <td>23278.259766</td>
+      <td>0.017545</td>
+    </tr>
+    <tr>
+      <th>1578</th>
+      <td>23282.130859</td>
+      <td>0.017543</td>
+    </tr>
+    <tr>
+      <th>1579</th>
+      <td>23285.970703</td>
+      <td>0.015312</td>
+    </tr>
+    <tr>
+      <th>1580</th>
+      <td>23289.839844</td>
+      <td>0.015310</td>
+    </tr>
+    <tr>
+      <th>1581</th>
+      <td>23293.699219</td>
+      <td>0.014193</td>
+    </tr>
+    <tr>
+      <th>1582</th>
+      <td>23297.570312</td>
+      <td>0.014191</td>
+    </tr>
+    <tr>
+      <th>1583</th>
+      <td>23301.419922</td>
+      <td>0.013075</td>
+    </tr>
+    <tr>
+      <th>1584</th>
+      <td>23305.279297</td>
+      <td>0.011958</td>
+    </tr>
+    <tr>
+      <th>1585</th>
+      <td>23309.150391</td>
+      <td>0.011956</td>
+    </tr>
+    <tr>
+      <th>1586</th>
+      <td>23313.019531</td>
+      <td>0.011954</td>
+    </tr>
+    <tr>
+      <th>1587</th>
+      <td>23316.880859</td>
+      <td>0.010838</td>
+    </tr>
+    <tr>
+      <th>1588</th>
+      <td>23320.740234</td>
+      <td>0.010836</td>
+    </tr>
+    <tr>
+      <th>1589</th>
+      <td>23324.599609</td>
+      <td>0.009719</td>
+    </tr>
+    <tr>
+      <th>1590</th>
+      <td>23328.470703</td>
+      <td>0.009717</td>
+    </tr>
+    <tr>
+      <th>1591</th>
+      <td>23332.330078</td>
+      <td>0.008601</td>
+    </tr>
+    <tr>
+      <th>1592</th>
+      <td>23336.199219</td>
+      <td>0.008599</td>
+    </tr>
+    <tr>
+      <th>1593</th>
+      <td>23340.050781</td>
+      <td>0.007482</td>
+    </tr>
+    <tr>
+      <th>1594</th>
+      <td>23343.919922</td>
+      <td>0.007480</td>
+    </tr>
+    <tr>
+      <th>1595</th>
+      <td>23347.789062</td>
+      <td>0.007478</td>
+    </tr>
+    <tr>
+      <th>1596</th>
+      <td>23351.650391</td>
+      <td>0.006362</td>
+    </tr>
+    <tr>
+      <th>1597</th>
+      <td>23355.519531</td>
+      <td>0.006360</td>
+    </tr>
+    <tr>
+      <th>1598</th>
+      <td>23359.390625</td>
+      <td>0.006358</td>
+    </tr>
+    <tr>
+      <th>1599</th>
+      <td>23363.240234</td>
+      <td>0.005241</td>
+    </tr>
+    <tr>
+      <th>1600</th>
+      <td>23367.109375</td>
+      <td>0.005239</td>
+    </tr>
+    <tr>
+      <th>1601</th>
+      <td>23370.970703</td>
+      <td>0.004123</td>
+    </tr>
+    <tr>
+      <th>1602</th>
+      <td>23374.839844</td>
+      <td>0.004121</td>
+    </tr>
+  </tbody>
+</table>
+<p>1603 rows × 2 columns</p>
+</div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
+</div>
+<script type="application/vnd.jupyter.widget-state+json">
+{"state": {"0898a430de5d400c8bc275618f3111b0": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "28b9b444723a4201887c541bb2a576ad": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_fe38a3e7c4e74825b6f51abec4911f63", "style": "IPY_MODEL_674f4f10fccf4fb1896f334cdc8a5634", "value": " 17% 804/4647 [08:01&lt;36:09,  1.77it/s, CAHA/CAHA.466_9]"}}, "35ae1e06c46c4535971e556e2000fc5e": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.1.0", "model_name": "LayoutModel", "state": {}}, "51ba9386795a4ca8be2bbd3d8fbac659": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "IntProgressModel", "state": {"bar_style": "success", "description": "Filter ID", "layout": "IPY_MODEL_ff3be57b35fe42369fc7b41d40d0fd25", "max": 4647, "style": "IPY_MODEL_6333acb7879948ea9b73db32d5f81290", "value": 4647}}, "51bf5c90bcf74c60a4bf561bdbffd973": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "HBoxModel", "state": {"children": ["IPY_MODEL_51ba9386795a4ca8be2bbd3d8fbac659", "IPY_MODEL_bfa134cdea6b45fca9af3869c9f8e08f"], "layout": "IPY_MODEL_dd5951d99be6492dbe1937d4f69c5171"}}, "559590aa427648b3bfd734ed1ff5689b": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "HBoxModel", "state": {"children": ["IPY_MODEL_a18f3fdda17345598c1a5ff09a0b3f08", "IPY_MODEL_28b9b444723a4201887c541bb2a576ad"], "layout": "IPY_MODEL_df3055e875eb4bdfb0578b57247404d5"}}, "5610fed606cd47d089b00967945a69cb": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.1.0", "model_name": "LayoutModel", "state": {}}, "6333acb7879948ea9b73db32d5f81290": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "ProgressStyleModel", "state": {"description_width": "initial"}}, "674f4f10fccf4fb1896f334cdc8a5634": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "a18f3fdda17345598c1a5ff09a0b3f08": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "IntProgressModel", "state": {"description": "Filter ID", "layout": "IPY_MODEL_5610fed606cd47d089b00967945a69cb", "max": 4647, "style": "IPY_MODEL_d95292c4a7944765a1efa66bdbec3a22", "value": 804}}, "bfa134cdea6b45fca9af3869c9f8e08f": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_35ae1e06c46c4535971e556e2000fc5e", "style": "IPY_MODEL_0898a430de5d400c8bc275618f3111b0", "value": "100% 4647/4647 [43:31&lt;00:00, 1.78it/s, Herschel/SPIRE.PLW_ext]"}}, "d95292c4a7944765a1efa66bdbec3a22": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.4.0", "model_name": "ProgressStyleModel", "state": {"description_width": "initial"}}, "dd5951d99be6492dbe1937d4f69c5171": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.1.0", "model_name": "LayoutModel", "state": {}}, "df3055e875eb4bdfb0578b57247404d5": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.1.0", "model_name": "LayoutModel", "state": {}}, "fe38a3e7c4e74825b6f51abec4911f63": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.1.0", "model_name": "LayoutModel", "state": {}}, "ff3be57b35fe42369fc7b41d40d0fd25": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.1.0", "model_name": "LayoutModel", "state": {}}}, "version_major": 2, "version_minor": 0}
+</script></div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+<ul>
+<li><a class="reference internal" href="#">Using cache_filters (cf) module</a><ul>
+<li><a class="reference internal" href="#Download-filter-data">Download filter data</a></li>
+<li><a class="reference internal" href="#Load-Filter-index-from-cache">Load Filter index from cache</a></li>
+<li><a class="reference internal" href="#Load-transmission-data-of-a-Filter-from-cache">Load transmission data of a Filter from cache</a></li>
+</ul>
+</li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right">
+    <a href="../_sources/io/cache_filters.ipynb.txt"
+       rel="nofollow">Page Source</a> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2019, StarKit collaboration.<br/>
+    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.8.5. &nbsp;
+    Last built 11 Jul 2019. <br/>
+  </p>
+</footer>
+  </body>
+</html>
