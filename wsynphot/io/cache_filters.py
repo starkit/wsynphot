@@ -1,5 +1,6 @@
 import os, re
 import numpy as np
+import logging
 
 # tqdm.autonotebook automatically chooses between console & notebook
 from tqdm.autonotebook import tqdm
@@ -12,7 +13,7 @@ from wsynphot.config import get_data_dir
 CACHE_DIR = os.path.join(get_data_dir(), 'cached_SVO_FPS')
 if not os.path.exists(CACHE_DIR):
     os.mkdir(CACHE_DIR)
-
+logger = logging.getLogger(__name__)
 
 def cache_as_votable(table, file_path):
     """Caches the passed table on disk as a VOTable.
@@ -45,13 +46,13 @@ def download_filter_data(cache_dir=CACHE_DIR):
         Path of the directory where downloaded data is to be cached 
     """
     # Get filter index and cache it
-    print("Caching filter index ...")
+    logger.info("Caching filter index ...")
     index_table = get_filter_index().to_table()
     cache_as_votable(index_table,
         os.path.join(cache_dir, 'index'))
 
     # Fetch filter_ids from index as an iterator decorated with progress bar
-    print("Caching transmission data ...")
+    logger.info("Caching transmission data ...")
     filter_ids_pbar = tqdm(index_table['filterID'], desc='Filter ID',
         total=len(index_table))
 
@@ -67,8 +68,8 @@ def download_filter_data(cache_dir=CACHE_DIR):
             cache_as_votable(filter_table,
                 os.path.join(cache_dir, facility, instrument, filter_name))
         except Exception as e:
-            print('Data for Filter ID = {0} could not be downloaded due '
-                'to:\n{1}'.format(filter_id, e))
+            logger.error('Data for Filter ID = {0} could not be downloaded '
+                'due to:\n{1}'.format(filter_id, e))
 
 
 def load_filter_index(cache_dir=CACHE_DIR):
@@ -86,7 +87,9 @@ def load_filter_index(cache_dir=CACHE_DIR):
         Filter index loaded as a dataframe
     """
     filter_index_loc = os.path.join(cache_dir, 'index.vot')
-    error_msg = 'No filter index found'
+    error_msg = ('No filter index found in cache directory: {0}\nMake sure you'
+    ' have already downloaded filter data by calling download_filter_data'
+    '()'.format(cache_dir))
     return df_from_votable(filter_index_loc, error_msg)
 
 
