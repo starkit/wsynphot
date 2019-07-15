@@ -15,6 +15,7 @@ if not os.path.exists(CACHE_DIR):
     os.mkdir(CACHE_DIR)
 logger = logging.getLogger(__name__)
 
+
 def cache_as_votable(table, file_path):
     """Caches the passed table on disk as a VOTable.
 
@@ -56,20 +57,38 @@ def download_filter_data(cache_dir=CACHE_DIR):
     filter_ids_pbar = tqdm(index_table['filterID'], desc='Filter ID',
         total=len(index_table))
 
-    # Iterate over each filter_id in the generated iterator
+    # Iterate over each filter_id and download transmission data
     for filter_id in filter_ids_pbar:
         filter_id = filter_id.decode("utf-8")  # convert byte string to literal
         filter_ids_pbar.set_postfix_str(filter_id)
 
-        # Get transmission data for a filter_id and cache it
         try:
-            facility, instrument, filter_name = re.split('/|\.', filter_id)
-            filter_table = get_transmission_data(filter_id).to_table()
-            cache_as_votable(filter_table,
-                os.path.join(cache_dir, facility, instrument, filter_name))
+            download_transmission_data(filter_id, cache_dir)
         except Exception as e:
-            logger.error('Data for Filter ID = {0} could not be downloaded '
+            logger.error('Data for filter ID = {0} could not be downloaded '
                 'due to:\n{1}'.format(filter_id, e))
+
+
+def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
+    """Downloads transmission data for the requested filter ID systematically  
+    on disk as cache (in facility/instrument/ directory).
+
+    Parameters
+    ----------
+    filter_id : str
+        Filter ID in either wsynphot format: 'facilty/instrument/filter' 
+        or SVO format: 'facilty/instrument.filter' (Can use '/' and '.' 
+        interchangeably as delimiters)
+    cache_dir : str, optional
+        Path of the directory where downloaded data is to be cached 
+    """
+    facility, instrument, filter_name = re.split('/|\.', filter_id)
+    # Convert filter_id in SVO format to get transmission data from SVO
+    svo_filter_id = '{0}/{1}.{2}'.format(facility, instrument, filter_name)
+    filter_table = get_transmission_data(svo_filter_id).to_table()
+
+    cache_as_votable(filter_table, os.path.join(cache_dir, facility, 
+        instrument, filter_name))
 
 
 def load_filter_index(cache_dir=CACHE_DIR):
@@ -87,10 +106,14 @@ def load_filter_index(cache_dir=CACHE_DIR):
         Filter index loaded as a dataframe
     """
     filter_index_loc = os.path.join(cache_dir, 'index.vot')
-    error_msg = ('No filter index found in cache directory: {0}\nMake sure you'
-    ' have already downloaded filter data by calling download_filter_data'
-    '()'.format(cache_dir))
-    return df_from_votable(filter_index_loc, error_msg)
+    
+    # When no index votable is present
+    if not os.path.exists(filter_index_loc):
+        raise IOError('Filter index does not exist in the cache directory: '
+            '{0}\nMake sure you have already downloaded filter data by using '
+            'download_filter_data()'.format(cache_dir))
+
+    return df_from_votable(filter_index_loc)
 
 
 def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
@@ -114,11 +137,28 @@ def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
     facility, instrument, filter_name = re.split('/|\.', filter_id)
     transmission_data_loc = os.path.join(cache_dir, facility, instrument,
         '{0}.vot'.format(filter_name))
-    error_msg = 'No filter found for requested Filter ID'
-    return df_from_votable(transmission_data_loc, error_msg)
+
+    # When no such filter votable is present
+    if not os.path.exists(transmission_data_loc):
+        index = load_filter_index(cache_dir)
+        # Check whether filter_id is present in index
+        svo_filter_id = '{0}/{1}.{2}'.format(facility, instrument, filter_name)
+        if svo_filter_id in index['filterID'].values:
+            raise IOError('Requested filter ID: {0} exists in index, but its '
+                'transmission data is missing in the cache directory: {1}\n'
+                'Make sure you have downloaded complete filter data by using '
+                'download_filter_data(). Or if you specifically want to '
+                'download transmission data for only requested filter ID, '
+                'use download_transmission_data()'.format(filter_id, 
+                    cache_dir))
+        else:
+            raise ValueError('Requested filter ID: {0} does not '
+                'exists'.format(filter_id))
+
+    return df_from_votable(transmission_data_loc)
 
 
-def df_from_votable(votable_path, error_msg):
+def df_from_votable(votable_path):
     """Parses the passed VOTable to produce data in a usable table format as 
     pandas dataframe.
 
@@ -127,21 +167,12 @@ def df_from_votable(votable_path, error_msg):
     votable_path : str
         Path where VOTable to be used is stored. Make sure passed VOTable is 
         properly formatted, since this is "not" a general purpose function.
-    error_msg : str
-        Error message to be shown in case no VOTable exists for the passed
-        path. Use this to make error message verbose in context of the 
-        VOTable passed.
 
     Returns
     -------
     pandas.core.frame.DataFrame
         Parsed data as a dataframe
     """
-    # When no such votable is present
-    if not os.path.exists(votable_path):
-        raise ValueError(error_msg)
-
-    # Parse VOTable & convert it to Dataframe
     table = parse_single_table(votable_path).to_table()
     df = table.to_pandas()
     return byte_to_literal_strings(df)
