@@ -71,7 +71,7 @@ def download_filter_data(cache_dir=CACHE_DIR):
 
 def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
     """Downloads transmission data for the requested filter ID systematically  
-    on disk as cache (in facilty/instrument/ directory).
+    on disk as cache (in facility/instrument/ directory).
 
     Parameters
     ----------
