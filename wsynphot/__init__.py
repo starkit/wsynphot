@@ -24,7 +24,7 @@ if not on_rtd:
         from wsynphot.calibration import get_vega
         from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
         from wsynphot.data.base import (
-            delete_filter_data, download_filter_data,
+            delete_filter_data, download_filter_data, download_calibration_data, 
             ALPHA_LYR_PATH, ALPHA_LYR_FNAME)
 
 FORMAT = "[%(levelname)-18s] [$BOLD%(name)-20s$RESET] %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
