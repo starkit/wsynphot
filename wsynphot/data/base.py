@@ -1,10 +1,14 @@
 from __future__ import print_function
 import os
+import shutil
+import urllib.request as request
+import logging
 
 import requests
 from tqdm.autonotebook import tqdm
 from wsynphot.config import get_data_dir
 
+logger = logging.getLogger(__name__)
 
 
 FILTER_DATA_FPATH = os.path.join(get_data_dir(), 'filter_data.h5')
@@ -13,8 +17,10 @@ DATA_TRANSMISSION_URL = ("https://zenodo.org/record/1467309/files/"
                          "filter_data.h5?download=1")
 
 ALPHA_LYR_FNAME = 'alpha_lyr_mod_002.fits'
-ALPHA_LYR_PATH = os.path.join(os.path.dirname(__file__), 'calibration',
-                              ALPHA_LYR_FNAME)
+
+CALIBRATION_DIR = os.path.join(get_data_dir(), 'calibration')
+
+ALPHA_LYR_PATH = os.path.join(CALIBRATION_DIR, ALPHA_LYR_FNAME)
 
 ALPHA_LYR_MOD_URL= "ftp://ftp.stsci.edu/cdbs/calspec/{0}".format(
     ALPHA_LYR_FNAME)
@@ -63,6 +69,11 @@ def delete_filter_data():
 
 def download_calibration_data():
     if os.path.exists(ALPHA_LYR_PATH):
-        print('Alpha Lyra calibration already exists - not downloading')
+        logger.error('Alpha Lyra calibration already exists - not downloading')
     else:
-        download_from_url(ALPHA_LYR_MOD_URL, ALPHA_LYR_PATH)
+        logger.info('Downloading Alpha Lyra calibration ...')
+        if not os.path.exists(CALIBRATION_DIR):
+            os.makedirs(CALIBRATION_DIR)
+        with request.urlopen(ALPHA_LYR_MOD_URL) as response:
+            with open(ALPHA_LYR_PATH, 'wb') as file:
+                shutil.copyfileobj(response, file)
