@@ -42,7 +42,7 @@ def test_IOError_in_load_filter_index():
     pytest.raises(IOError, cf.load_filter_index, DATA_PATH)
 
 @pytest.mark.parametrize(('test_filter_id'), 
-                        ['HST/NICMOS1.F113N', 'HST/WFPC2.f218w'])
+                        ['HST/NICMOS1.F113N', 'HST/ACS_HRC.F250W'])
 def test_load_transmission_data(test_filter_id):
     data = cf.load_transmission_data(test_filter_id, CACHE_DIR)
     assert data.empty == False
