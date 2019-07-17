@@ -6,7 +6,7 @@ import wsynphot
 from wsynphot.io import cache_filters as cf
 
 DATA_PATH = os.path.join(wsynphot.__path__[0], 'io', 'tests', 'data')
-CACHE_DIR = os.path.join(DATA_PATH, 'cached_SVO_FPS')
+CACHE_DIR = os.path.join(DATA_PATH, 'filters', 'SVO')
 
 @pytest.fixture
 def sample_table():
