@@ -1,15 +1,14 @@
 # defining the base filter curve classes
-from __future__ import print_function
+
 import os
 
 from scipy import interpolate
 from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
 import pandas as pd
-from wsynphot.data.base import FILTER_DATA_FPATH
+from wsynphot.io.cache_filters import load_filter_index, load_transmission_data
 
 
 
-from pandas import HDFStore
 from astropy import units as u, constants as const
 
 from astropy import utils
@@ -39,6 +38,7 @@ def calculate_filter_flux_density(spectrum, filter):
                     filtered_spectrum.wavelength)
     return filter_flux_density
 
+
 def calculate_vega_magnitude(spectrum, filter):
     filter_flux_density = calculate_filter_flux_density(spectrum, filter)
     wavelength_delta = filter.calculate_wavelength_delta()
@@ -49,7 +49,6 @@ def calculate_vega_magnitude(spectrum, filter):
     return -2.5 * np.log10(filtered_f_lambda / zp_vega_f_lambda)
 
 
-
 def calculate_ab_magnitude(spectrum, filter):
     filtered_f_lambda = (calculate_filter_flux_density(spectrum, filter) /
                          filter.calculate_wavelength_delta())
@@ -57,27 +56,12 @@ def calculate_ab_magnitude(spectrum, filter):
     return -2.5 * np.log10(filtered_f_lambda / filter.zp_ab_f_lambda)
 
 
-
-
-def get_filter_index():
-    """
-    Get the index Dataframe for the Filters
-    """
-    if not os.path.exists(FILTER_DATA_FPATH):
-        raise IOError('Filter Data does not exist at - {0} - please '
-                      'download it by doing wsynphot.download_filter_data'
-                      '()'.format(FILTER_DATA_FPATH))
-
-    filter_index = pd.read_hdf(FILTER_DATA_FPATH, 'index').set_index('wsynphot_filter_id')
-    return filter_index
-
-
 def list_filters():
     """
-    List available filter sets
+    List available filter sets along with their properties
     """
+    return load_filter_index()
 
-    return get_filter_index()
 
 class BaseFilterCurve(object):
     """
@@ -97,52 +81,36 @@ class BaseFilterCurve(object):
     """
 
     @classmethod
-    def load_filter(cls, filter_name=None, interpolation_kind='linear'):
+    def load_filter(cls, filter_id=None, interpolation_kind='linear'):
         """
 
         Parameters
         ----------
 
-        filter_name: str or None
+        filter_id: str or None
             if None is provided will return a DataFrame of all filters
-
-        wavelength_unit: str or astropy.units.Unit
-            for some filtersets (e.g. gemini) this can be autodetected
 
         interpolation_kind: str
             see scipy.interpolation.interp1d
-
-
+            
         """
-        if not os.path.exists(FILTER_DATA_FPATH):
-            raise IOError('Filter Data does not exist at - {0} - please '
-                          'download it by doing wsynphot.download_filter_data'
-                          '()'.format(FILTER_DATA_FPATH))
-        if filter_name is None:
-            filter_index = pd.read_hdf(FILTER_DATA_FPATH, 'index')
-            return filter_index
+        if filter_id is None:
+            return list_filters()
 
         else:
-            filter_store = HDFStore(FILTER_DATA_FPATH, mode='r')
-            try:
-                filter = filter_store[filter_name]
-            except KeyError:
-                filter_store.close()
-                raise ValueError('Requested filter ({0}) does not exist'.format(
-                    filter_name))
-            finally:
-                filter_store.close()
-
+            filter = load_transmission_data(filter_id)
+            
             wavelength_unit = 'angstrom'
 
-            wavelength = filter.wavelength.values * u.Unit(wavelength_unit)
+            wavelength = filter['Wavelength'].values * u.Unit(wavelength_unit)
 
-            return cls(wavelength, filter.transmission_lambda.values,
+            return cls(wavelength, filter['Transmission'].values,
                        interpolation_kind=interpolation_kind,
-                       filter_name=filter_name)
+                       filter_id=filter_id)
+
 
     def __init__(self, wavelength, transmission_lambda,
-                 interpolation_kind='linear', filter_name=None):
+                 interpolation_kind='linear', filter_id=None):
         if not hasattr(wavelength, 'unit'):
             raise ValueError('the wavelength needs to be a astropy quantity')
         self.wavelength = wavelength
@@ -153,7 +121,7 @@ class BaseFilterCurve(object):
                                                          kind=interpolation_kind,
                                                          bounds_error=False,
                                                          fill_value=0.0)
-        self.filter_name = filter_name
+        self.filter_id = filter_id
 
 
     def __mul__(self, other):
@@ -276,7 +244,7 @@ class BaseFilterCurve(object):
         return 10**(-0.4*mag) * self.zp_vega_f_lambda
 
     def plot(self, ax, scale_max=None, make_label=True, plot_kwargs={},
-             format_filter_name=None):
+             format_filter_id=None):
         if scale_max is not None:
             if hasattr(scale_max, 'unit'):
                 scale_max = scale_max.value
@@ -291,14 +259,14 @@ class BaseFilterCurve(object):
             self.wavelength.unit.to_string(format='latex')))
         ax.set_ylabel('Transmission [1]')
 
-        if make_label==True and self.filter_name is not None:
-            if format_filter_name is not None:
-                filter_name = format_filter_name(self.filter_name)
+        if make_label==True and self.filter_id is not None:
+            if format_filter_id is not None:
+                filter_id = format_filter_id(self.filter_id)
             else:
-                filter_name = self.filter_name
+                filter_id = self.filter_id
             text_x = (self.lambda_pivot).value
             text_y = transmission.max()/2
-            ax.text(text_x, text_y, filter_name,
+            ax.text(text_x, text_y, filter_id,
                     horizontalalignment='center', verticalalignment='center',
                     bbox=dict(facecolor='white', alpha=0.5))
 
@@ -316,11 +284,11 @@ class BaseFilterCurve(object):
 
 class FilterCurve(BaseFilterCurve):
     def __repr__(self):
-        if self.filter_name is None:
-            filter_name = "{0:x}".format(self.__hash__())
+        if self.filter_id is None:
+            filter_id = "{0:x}".format(self.__hash__())
         else:
-            filter_name = self.filter_name
-        return "FilterCurve <{0}>".format(filter_name)
+            filter_id = self.filter_id
+        return "FilterCurve <{0}>".format(filter_id)
 
 
 
@@ -345,10 +313,10 @@ class FilterSet(object):
         if hasattr(filter_set[0], 'wavelength'):
             self.filter_set = filter_set
         else:
-            self.filter_set = [FilterCurve.load_filter(filter_name,
+            self.filter_set = [FilterCurve.load_filter(filter_id,
                                               interpolation_kind=
                                               interpolation_kind)
-                      for filter_name in filter_set]
+                      for filter_id in filter_set]
 
 
 
@@ -373,7 +341,7 @@ class FilterSet(object):
     def __repr__(self):
         return "<{0} \n{1}>".format(self.__class__.__name__,
                                     '\n'.join(
-                                        [item.filter_name
+                                        [item.filter_id
                                          for item in self.filter_set]))
 
 
@@ -455,7 +423,7 @@ class FilterSet(object):
 
     def plot_spectrum(self, spectrum, ax, make_labels=True,
                       spectrum_plot_kwargs={}, filter_plot_kwargs={},
-                      filter_color_list=None, format_filter_name=None):
+                      filter_color_list=None, format_filter_id=None):
         """
         plot a spectrum with the given filters
         spectrum:
@@ -470,7 +438,7 @@ class FilterSet(object):
                 filter_plot_kwargs['color'] = filter_color_list[i]
             filter.plot(ax, scale_max=filter_scale, make_label=make_labels,
                         plot_kwargs=filter_plot_kwargs,
-                        format_filter_name=format_filter_name)
+                        format_filter_id=format_filter_id)
 
 
 
@@ -489,7 +457,7 @@ class MagnitudeSet(FilterSet):
         for i, filter in enumerate(self.filter_set):
             unc = (np.nan if self.magnitude_uncertainties is None
                    else self.magnitude_uncertainties[i])
-            mag_data.append(mag_str.format(filter.filter_name,
+            mag_data.append(mag_str.format(filter.filter_id,
                                            self.magnitudes[i], unc))
 
         return "<{0} \n{1}>".format(self.__class__.__name__,

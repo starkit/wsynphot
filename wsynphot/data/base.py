@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os
 import shutil
 import urllib.request as request
@@ -10,11 +9,6 @@ from wsynphot.config import get_data_dir
 
 logger = logging.getLogger(__name__)
 
-
-FILTER_DATA_FPATH = os.path.join(get_data_dir(), 'filter_data.h5')
-
-DATA_TRANSMISSION_URL = ("https://zenodo.org/record/1467309/files/"
-                         "filter_data.h5?download=1")
 
 ALPHA_LYR_FNAME = 'alpha_lyr_mod_002.fits'
 
@@ -53,19 +47,6 @@ def download_from_url(url, dst):
     pbar.close()
     return file_size
 
-
-
-
-def download_filter_data():
-    if os.path.exists(FILTER_DATA_FPATH):
-        print('Filter Data already exists - you can delete by '
-              'calling wsynphot.delete_filter_data()')
-    download_from_url(DATA_TRANSMISSION_URL, FILTER_DATA_FPATH)
-
-def delete_filter_data():
-    if not os.path.exists(FILTER_DATA_FPATH):
-        print('Filter Data does not exist - nothing to delete')
-    os.remove(FILTER_DATA_FPATH)
 
 def download_calibration_data():
     if os.path.exists(ALPHA_LYR_PATH):
