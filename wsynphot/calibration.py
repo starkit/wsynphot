@@ -7,7 +7,7 @@ from wsynphot.data.base import ALPHA_LYR_PATH
 
 default_vega_path = ALPHA_LYR_PATH
 
-def get_vega(vega_file=None):
+def get_vega_calibration_spectrum(vega_file=None):
     """Get vega spectrum from a calibration file
 
     Parameters
