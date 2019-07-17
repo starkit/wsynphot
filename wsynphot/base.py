@@ -14,7 +14,7 @@ from astropy import units as u, constants as const
 
 from astropy import utils
 import numpy as np
-from wsynphot.calibration import get_vega
+from wsynphot.calibration import get_vega_calibration_spectrum
 
 
 def calculate_filter_flux_density(spectrum, filter):
@@ -208,7 +208,7 @@ class BaseFilterCurve(object):
 
     @utils.lazyproperty
     def zp_vega_f_lambda(self):
-        return (calculate_filter_flux_density(get_vega(), self) /
+        return (calculate_filter_flux_density(get_vega_calibration_spectrum(), self) /
                 self.calculate_wavelength_delta())
 
 
