@@ -52,21 +52,9 @@ def download_filter_data(cache_dir=CACHE_DIR):
     cache_as_votable(index_table,
         os.path.join(cache_dir, 'index'))
 
-    # Fetch filter_ids from index as an iterator decorated with progress bar
+    # Fetch filter_ids from index & download transmission data
     logger.info("Caching transmission data ...")
-    filter_ids_pbar = tqdm(index_table['filterID'], desc='Filter ID',
-        total=len(index_table))
-
-    # Iterate over each filter_id and download transmission data
-    for filter_id in filter_ids_pbar:
-        filter_id = filter_id.decode("utf-8")  # convert byte string to literal
-        filter_ids_pbar.set_postfix_str(filter_id)
-
-        try:
-            download_transmission_data(filter_id, cache_dir)
-        except Exception as e:
-            logger.error('Data for filter ID = {0} could not be downloaded '
-                'due to:\n{1}'.format(filter_id, e))
+    iterative_download_transmission_data(index_table['filterID'], cache_dir)
 
 
 def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
@@ -89,6 +77,84 @@ def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
 
     cache_as_votable(filter_table, os.path.join(cache_dir, facility, 
         instrument, filter_name))
+
+
+def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
+    """Iteratively downloads transmission data for the passed filter IDs 
+    iterator, by internally calling download_transmission_data(). It also 
+    displays a progress bar with necessary information for the filters being 
+    downloaded.
+
+    Parameters
+    ----------
+    filter_ids: iterable
+        Iterable object containing Filter IDs as str in either wsynphot format: 
+        'facilty/instrument/filter' or SVO format: 'facilty/instrument.filter' 
+        (Can use '/' and '.' interchangeably as delimiters)
+    cache_dir : str, optional
+        Path of the directory where downloaded data is to be cached 
+    """
+    # Decorate the iterator with progress bar
+    filter_ids_pbar = tqdm(filter_ids, desc='Filter ID', total=len(filter_ids))
+
+    # Iterate over each filter_id and download transmission data
+    for filter_id in filter_ids_pbar:
+        if isinstance(filter_id, bytes): # treat byte string
+            filter_id = filter_id.decode("utf-8")
+
+        filter_ids_pbar.set_postfix_str(filter_id)
+
+        try:
+            download_transmission_data(filter_id, cache_dir)
+        except Exception as e:
+            logger.error('Data for filter ID = {0} could not be downloaded '
+                'due to:\n{1}'.format(filter_id, e))
+
+
+def update_filter_data(cache_dir=CACHE_DIR):
+    """Updates the cached filter data (filter index and transmission data) 
+    by downloading new filters & removing outdated filters.
+
+    Parameters
+    ----------
+    cache_dir : str, optional
+        Path of the directory where cached filter data is present 
+    """
+    # Obtain all filter IDs from cache as old_filters
+    old_index = load_filter_index(cache_dir)
+    old_filters = old_index['filterID'].to_numpy()
+    
+    # Obtain all filter IDs from SVO FPS as new_filters
+    logger.info("Fetching latest filter index ...")
+    new_index = get_filter_index().to_table()
+    new_filters = np.array(new_index['filterID'], dtype=str)
+
+    # Check whether there is need to update
+    if np.array_equal(old_filters, new_filters):
+        logger.info('Filter data is already up-to-date!')
+        return
+
+    # Iterate & remove (old_filters - new_filters) from cache
+    filters_to_remove = np.setdiff1d(old_filters, new_filters)
+    logger.info("Removing outdated filters ...")
+    for filter_id in filters_to_remove:
+        facility, instrument, filter_name = re.split('/|\.', filter_id)
+        filter_file = os.path.join(cache_dir, facility, instrument,
+        '{0}.vot'.format(filter_name))
+        if os.path.exists(filter_file):
+            os.remove(filter_file)
+    try:
+        os.removedirs(cache_dir)  # remove empty directories recursively
+    except OSError:
+        pass  # ignore as reached to a non-empty parent directory 
+    
+    # Iterate & download (new_filters - old_filters) into cache
+    filters_to_add = np.setdiff1d(new_filters, old_filters)
+    logger.info("Caching new filters ...")
+    iterative_download_transmission_data(filters_to_add, cache_dir)
+
+    # Overwrite new index in cache
+    cache_as_votable(new_index, os.path.join(cache_dir, 'index'))
 
 
 def load_filter_index(cache_dir=CACHE_DIR):
