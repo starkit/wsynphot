@@ -143,10 +143,7 @@ def update_filter_data(cache_dir=CACHE_DIR):
         '{0}.vot'.format(filter_name))
         if os.path.exists(filter_file):
             os.remove(filter_file)
-    try:
-        os.removedirs(cache_dir)  # remove empty directories recursively
-    except OSError:
-        pass  # ignore as reached to a non-empty parent directory 
+    remove_empty_dirs(cache_dir)
     
     # Iterate & download (new_filters - old_filters) into cache
     filters_to_add = np.setdiff1d(new_filters, old_filters)
@@ -259,3 +256,12 @@ def byte_to_literal_strings(dataframe):
             dataframe[col] = str_df[col]
     
     return dataframe
+
+
+def remove_empty_dirs(root_dir):
+    """Removes empty directories if present in the passed directory"""
+    for root, dirs, files in os.walk(root_dir, topdown=False):
+        for dirname in dirs:
+            dirpath = os.path.join(root, dirname)
+            if not os.listdir(dirpath): # check whether the dir is empty
+                os.rmdir(dirpath)
