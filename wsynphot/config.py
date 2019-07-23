@@ -41,3 +41,17 @@ def get_data_dir():
         raise IOError('Data directory specified in {0} does not exist'.format(data_dir))
 
     return data_dir
+
+
+def get_cache_dir():
+    cache_dir = os.path.join(get_data_dir(), 'filters', 'SVO')
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    return cache_dir
+
+
+def get_calibration_dir():
+    calibration_dir = os.path.join(get_data_dir(), 'calibration')
+    if not os.path.exists(calibration_dir):
+        os.makedirs(calibration_dir)
+    return calibration_dir

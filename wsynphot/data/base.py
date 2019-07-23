@@ -5,16 +5,14 @@ import logging
 
 import requests
 from tqdm.autonotebook import tqdm
-from wsynphot.config import get_data_dir
+from wsynphot.config import get_calibration_dir
 
 logger = logging.getLogger(__name__)
 
 
 ALPHA_LYR_FNAME = 'alpha_lyr_mod_002.fits'
 
-CALIBRATION_DIR = os.path.join(get_data_dir(), 'calibration')
-
-ALPHA_LYR_PATH = os.path.join(CALIBRATION_DIR, ALPHA_LYR_FNAME)
+ALPHA_LYR_PATH = os.path.join(get_calibration_dir(), ALPHA_LYR_FNAME)
 
 ALPHA_LYR_MOD_URL= "ftp://ftp.stsci.edu/cdbs/calspec/{0}".format(
     ALPHA_LYR_FNAME)
@@ -53,8 +51,6 @@ def download_calibration_data():
         logger.error('Alpha Lyra calibration already exists - not downloading')
     else:
         logger.info('Downloading Alpha Lyra calibration ...')
-        if not os.path.exists(CALIBRATION_DIR):
-            os.makedirs(CALIBRATION_DIR)
         with request.urlopen(ALPHA_LYR_MOD_URL) as response:
             with open(ALPHA_LYR_PATH, 'wb') as file:
                 shutil.copyfileobj(response, file)

@@ -8,11 +8,9 @@ from astropy.io.votable import parse_single_table
 
 from wsynphot.io.get_filter_data import (get_filter_index,
     get_transmission_data)
-from wsynphot.config import get_data_dir
+from wsynphot.config import get_cache_dir
 
-CACHE_DIR = os.path.join(get_data_dir(), 'filters', 'SVO')
-if not os.path.exists(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
+CACHE_DIR = get_cache_dir()
 logger = logging.getLogger(__name__)
 
 
