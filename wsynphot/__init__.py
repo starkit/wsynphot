@@ -35,3 +35,16 @@ console_handler.setFormatter(console_formatter)
 
 logger.addHandler(console_handler)
 logging.getLogger('py.warnings').addHandler(console_handler)
+
+
+# Check how much time it has been since cached filter data was last updated
+from wsynphot.config import get_cache_updation_date
+from datetime import datetime
+cache_updation_date = get_cache_updation_date()
+if cache_updation_date:  # only check when cache is updated at least once
+    current_date = datetime.now().date()
+    if (current_date - cache_updation_date).days > 30:
+        logger.critical('\n{line_stars}\n\nIt has been MORE THAN A MONTH since '
+            'you have updated the cache.\n\nMAKE SURE THAT THE CACHED FILTER '
+            'DATA IS UP-TO-DATE by calling update_filter_data()\n\n'
+            '{line_stars}\n\n'.format(line_stars='*'*80))

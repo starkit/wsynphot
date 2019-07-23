@@ -8,7 +8,7 @@ from astropy.io.votable import parse_single_table
 
 from wsynphot.io.get_filter_data import (get_filter_index,
     get_transmission_data)
-from wsynphot.config import get_cache_dir
+from wsynphot.config import get_cache_dir, set_cache_updation_date
 
 CACHE_DIR = get_cache_dir()
 logger = logging.getLogger(__name__)
@@ -49,6 +49,7 @@ def download_filter_data(cache_dir=CACHE_DIR):
     index_table = get_filter_index().to_table()
     cache_as_votable(index_table,
         os.path.join(cache_dir, 'index'))
+    set_cache_updation_date()
 
     # Fetch filter_ids from index & download transmission data
     logger.info("Caching transmission data ...")
@@ -130,6 +131,7 @@ def update_filter_data(cache_dir=CACHE_DIR):
     # Check whether there is need to update
     if np.array_equal(old_filters, new_filters):
         logger.info('Filter data is already up-to-date!')
+        set_cache_updation_date()
         return
 
     # Iterate & remove (old_filters - new_filters) from cache
@@ -150,6 +152,7 @@ def update_filter_data(cache_dir=CACHE_DIR):
 
     # Overwrite new index in cache
     cache_as_votable(new_index, os.path.join(cache_dir, 'index'))
+    set_cache_updation_date()
 
 
 def load_filter_index(cache_dir=CACHE_DIR):
