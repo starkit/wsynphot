@@ -45,6 +45,8 @@ def get_data_dir():
 
 
 def get_cache_dir():
+    """Returns the path of cache directory for storing filter data in a 
+    subdirectory of data_dir (i.e. defined in configuration file)"""
     cache_dir = os.path.join(get_data_dir(), 'filters', 'SVO')
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
@@ -52,6 +54,8 @@ def get_cache_dir():
 
 
 def get_calibration_dir():
+    """Returns the path of calibration directory for storing calibration files 
+    in a subdirectory of data_dir (i.e. defined in configuration file)"""
     calibration_dir = os.path.join(get_data_dir(), 'calibration')
     if not os.path.exists(calibration_dir):
         os.makedirs(calibration_dir)
@@ -59,9 +63,14 @@ def get_calibration_dir():
 
 
 def get_cache_updation_date():
-    """Gets value of cache_updation_date from the configuration file and handles
-     the exceptions when unexpected value is encountered"""
+    """Gets value of cache_updation_date from the configuration file and 
+    handles the exceptions when unexpected value is encountered
 
+    Returns
+    -------
+    datetime.date
+        cache_updation_date defined in the configuration file
+    """
     config = get_configuration()
     cache_updation_date_text = config.get('cache_updation_date', None)
     cache_dir = get_cache_dir()
@@ -103,8 +112,13 @@ def set_cache_updation_date():
 def rectify_cache_updation_date(config, error_log):
     """Sets the correct cache_updation_date so that wsynphot can automatically 
     recover from wrong configuration, when user has changed the date value 
-    mistakenly"""
+    mistakenly
 
+    Returns
+    -------
+    datetime.date
+        Rectified cache_updation_date
+    """
     logger.critical('\n{line_stars}\n\nUNEXPECTED CHANGES DETECTED IN '
         '`cache_updation_date`: {error_text}\n\nAssuming it as the latest '
         'modification date of cached filter index\n\n{line_stars}\n'
