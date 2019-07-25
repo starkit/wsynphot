@@ -21,6 +21,8 @@ if not _ASTROPY_SETUP_:
     from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
     from wsynphot.data.base import (download_calibration_data, 
         ALPHA_LYR_PATH, ALPHA_LYR_FNAME)
+    from wsynphot.io.cache_filters import (download_filter_data, 
+        update_filter_data, download_transmission_data)
 
 FORMAT = "[%(levelname)-18s] [$BOLD%(name)-20s$RESET] %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
 COLOR_FORMAT = formatter_message(FORMAT, True)
