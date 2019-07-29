@@ -118,6 +118,12 @@ def update_filter_data(cache_dir=CACHE_DIR):
     ----------
     cache_dir : str, optional
         Path of the directory where cached filter data is present 
+    
+    Returns
+    -------
+    bool
+        True if cache got updated, otherwise False for the case when cache is 
+        already up-to-date
     """
     # Obtain all filter IDs from cache as old_filters
     old_index = load_filter_index(cache_dir)
@@ -132,7 +138,7 @@ def update_filter_data(cache_dir=CACHE_DIR):
     if np.array_equal(old_filters, new_filters):
         logger.info('Filter data is already up-to-date!')
         set_cache_updation_date()
-        return
+        return False
 
     # Iterate & remove (old_filters - new_filters) from cache
     filters_to_remove = np.setdiff1d(old_filters, new_filters)
@@ -153,6 +159,7 @@ def update_filter_data(cache_dir=CACHE_DIR):
     # Overwrite new index in cache
     cache_as_votable(new_index, os.path.join(cache_dir, 'index'))
     set_cache_updation_date()
+    return True
 
 
 def load_filter_index(cache_dir=CACHE_DIR):
