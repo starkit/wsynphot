@@ -23,14 +23,18 @@ def test_cache_as_votable(sample_table):
     data = cf.df_from_votable(sample_votable_path)
     pdt.assert_frame_equal(sample_table.to_pandas(), data)
 
-@pytest.mark.parametrize(('test_filter_id'), 
-                        ['Keck/NIRC2.Kp', 'Keck/LWS/SiC'])
-def test_download_transmission_data(test_filter_id):
-    cf.download_transmission_data(test_filter_id, CACHE_DIR)
-    facility, instrument, filter_name = re.split('/|\.', test_filter_id)
-    # Check whether filter votable get stored in appropriate directory
-    assert os.path.exists(os.path.join(CACHE_DIR, facility, instrument,
-        '{0}.vot'.format(filter_name)))
+@pytest.fixture
+def sample_filter_ids():
+    filter_ids_list = ['Keck/NIRC2.Kp', 'Keck/LWS/SiC']
+    return filter_ids_list
+
+def test_iterative_download_transmission_data(sample_filter_ids):
+    cf.iterative_download_transmission_data(sample_filter_ids, CACHE_DIR)
+    for filter_id in sample_filter_ids:
+        facility, instrument, filter_name = re.split('/|\.', filter_id)
+        # Check whether filter votable get stored in appropriate directory
+        assert os.path.exists(os.path.join(CACHE_DIR, facility, instrument,
+            '{0}.vot'.format(filter_name)))
 
 def test_load_filter_index():
     data = cf.load_filter_index(CACHE_DIR)

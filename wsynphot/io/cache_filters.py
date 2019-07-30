@@ -8,11 +8,9 @@ from astropy.io.votable import parse_single_table
 
 from wsynphot.io.get_filter_data import (get_filter_index,
     get_transmission_data)
-from wsynphot.config import get_data_dir
+from wsynphot.config import get_cache_dir, set_cache_updation_date
 
-CACHE_DIR = os.path.join(get_data_dir(), 'filters', 'SVO')
-if not os.path.exists(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
+CACHE_DIR = get_cache_dir()
 logger = logging.getLogger(__name__)
 
 
@@ -51,22 +49,11 @@ def download_filter_data(cache_dir=CACHE_DIR):
     index_table = get_filter_index().to_table()
     cache_as_votable(index_table,
         os.path.join(cache_dir, 'index'))
+    set_cache_updation_date()
 
-    # Fetch filter_ids from index as an iterator decorated with progress bar
+    # Fetch filter_ids from index & download transmission data
     logger.info("Caching transmission data ...")
-    filter_ids_pbar = tqdm(index_table['filterID'], desc='Filter ID',
-        total=len(index_table))
-
-    # Iterate over each filter_id and download transmission data
-    for filter_id in filter_ids_pbar:
-        filter_id = filter_id.decode("utf-8")  # convert byte string to literal
-        filter_ids_pbar.set_postfix_str(filter_id)
-
-        try:
-            download_transmission_data(filter_id, cache_dir)
-        except Exception as e:
-            logger.error('Data for filter ID = {0} could not be downloaded '
-                'due to:\n{1}'.format(filter_id, e))
+    iterative_download_transmission_data(index_table['filterID'], cache_dir)
 
 
 def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
@@ -89,6 +76,90 @@ def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
 
     cache_as_votable(filter_table, os.path.join(cache_dir, facility, 
         instrument, filter_name))
+
+
+def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
+    """Iteratively downloads transmission data for the passed filter IDs 
+    iterator, by internally calling download_transmission_data(). It also 
+    displays a progress bar with necessary information for the filters being 
+    downloaded.
+
+    Parameters
+    ----------
+    filter_ids: iterable
+        Iterable object containing Filter IDs as str in either wsynphot format: 
+        'facilty/instrument/filter' or SVO format: 'facilty/instrument.filter' 
+        (Can use '/' and '.' interchangeably as delimiters)
+    cache_dir : str, optional
+        Path of the directory where downloaded data is to be cached 
+    """
+    # Decorate the iterator with progress bar
+    filter_ids_pbar = tqdm(filter_ids, desc='Filter ID', total=len(filter_ids))
+
+    # Iterate over each filter_id and download transmission data
+    for filter_id in filter_ids_pbar:
+        if isinstance(filter_id, bytes): # treat byte string
+            filter_id = filter_id.decode("utf-8")
+
+        filter_ids_pbar.set_postfix_str(filter_id)
+
+        try:
+            download_transmission_data(filter_id, cache_dir)
+        except Exception as e:
+            logger.error('Data for filter ID = {0} could not be downloaded '
+                'due to:\n{1}'.format(filter_id, e))
+
+
+def update_filter_data(cache_dir=CACHE_DIR):
+    """Updates the cached filter data (filter index and transmission data) 
+    by downloading new filters & removing outdated filters.
+
+    Parameters
+    ----------
+    cache_dir : str, optional
+        Path of the directory where cached filter data is present 
+    
+    Returns
+    -------
+    bool
+        True if cache got updated, otherwise False for the case when cache is 
+        already up-to-date
+    """
+    # Obtain all filter IDs from cache as old_filters
+    old_index = load_filter_index(cache_dir)
+    old_filters = old_index['filterID'].to_numpy()
+    
+    # Obtain all filter IDs from SVO FPS as new_filters
+    logger.info("Fetching latest filter index ...")
+    new_index = get_filter_index().to_table()
+    new_filters = np.array(new_index['filterID'], dtype=str)
+
+    # Check whether there is need to update
+    if np.array_equal(old_filters, new_filters):
+        logger.info('Filter data is already up-to-date!')
+        set_cache_updation_date()
+        return False
+
+    # Iterate & remove (old_filters - new_filters) from cache
+    filters_to_remove = np.setdiff1d(old_filters, new_filters)
+    logger.info("Removing outdated filters ...")
+    for filter_id in filters_to_remove:
+        facility, instrument, filter_name = re.split('/|\.', filter_id)
+        filter_file = os.path.join(cache_dir, facility, instrument,
+        '{0}.vot'.format(filter_name))
+        if os.path.exists(filter_file):
+            os.remove(filter_file)
+    remove_empty_dirs(cache_dir)
+    
+    # Iterate & download (new_filters - old_filters) into cache
+    filters_to_add = np.setdiff1d(new_filters, old_filters)
+    logger.info("Caching new filters ...")
+    iterative_download_transmission_data(filters_to_add, cache_dir)
+
+    # Overwrite new index in cache
+    cache_as_votable(new_index, os.path.join(cache_dir, 'index'))
+    set_cache_updation_date()
+    return True
 
 
 def load_filter_index(cache_dir=CACHE_DIR):
@@ -193,3 +264,12 @@ def byte_to_literal_strings(dataframe):
             dataframe[col] = str_df[col]
     
     return dataframe
+
+
+def remove_empty_dirs(root_dir):
+    """Removes empty directories if present in the passed directory"""
+    for root, dirs, files in os.walk(root_dir, topdown=False):
+        for dirname in dirs:
+            dirpath = os.path.join(root, dirname)
+            if not os.listdir(dirpath): # check whether the dir is empty
+                os.rmdir(dirpath)
