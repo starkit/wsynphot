@@ -37,7 +37,6 @@ steps:
       conda update -y conda
     displayName: Update conda and activate it
 
-  # Build & deploy docs from python3 environment. Hence use starkit_env3.yml
   - bash: |
       curl -O https://raw.githubusercontent.com/starkit/starkit/master/starkit_env3.yml
       conda env create -n starkit --file ./starkit_env3.yml
@@ -47,7 +46,86 @@ steps:
       source activate starkit
       pip install git+https://github.com/starkit/starkit
     displayName: Install starkit (since it is required by wsynphot)
+  
+  # After installing wsynphot, get cache directory wherein we will download svo
+  # filter data i.e. already stored at Azure as an artifact (Universal Package)
+  - bash: |
+      source activate starkit
+      python setup.py install
+      CACHE_DIR=`python -c 'import logging; logging.disable(logging.CRITICAL); \
+      from wsynphot.config import get_cache_dir; print(get_cache_dir())'`
+      echo '##vso[task.setvariable variable=cache_dir]'$CACHE_DIR
+    displayName: Install wsynphot & get cache directory
 
+  # Using Azure Rest API, fetch the latest version of filter data artifact from 
+  # the cached_data feed so as to consume the recently updated data.
+  # This script is adapted from https://stackoverflow.com/a/56824680
+  - pwsh: |
+      $head = @{ Authorization = "Bearer $env:SYSTEM_ACCESSTOKEN" }
+      $url = "https://feeds.dev.azure.com/starkit/_apis/packaging/Feeds/cached_data/packages/70d57642-6499-490f-ac9e-15bd85f93826?api-version=5.0-preview.1"
+      $package = Invoke-RestMethod -Uri $url -Method Get -Headers $head -ContentType application/json
+      $latestVersion = ($package.versions.Where({ $_.isLatest -eq $True })).version
+      Write-Host "The latest version is $latestVersion"
+      Write-Host "##vso[task.setvariable variable=latest_version]$latestVersion"
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    displayName: Get latest version of filter data artifact (svo_filters package)
+
+  # Download the latest versioned filter data artifact (Universal Package) into cache 
+  # dir so that notebooks can use it while executing them during docs building step
+  - task: UniversalPackages@0
+    inputs:
+      command: 'download'
+      downloadDirectory: $(cache_dir)
+      vstsFeed: 'cached_data'
+      vstsFeedPackage: 'svo_filters'
+      vstsPackageVersion: $(latest_version)
+    displayName: Download the latest filter data artifact in cache directory
+
+  # Also download calibration data which is required by code present in notebooks
+  - bash: |
+      source activate starkit
+      python -c 'import wsynphot; wsynphot.download_calibration_data()'
+    displayName: Download calibration data
+
+  # Before using filter data from cache directory, update it. Also store the update status
+  # to determine whether data got updated (True) or was it already up-to-date (False)
+  - bash: |
+      source activate starkit
+      UPDATE=`python -c 'import logging; logging.disable(logging.CRITICAL); \
+      import wsynphot; print(wsynphot.update_filter_data())'`
+
+      if [ $UPDATE = 'True' ]; then
+        NEXT_VER=`date -u +'%Y.%-m.%-d'`
+        if [ $NEXT_VER = $LATEST_VERSION ]; then
+          UPDATE='False'
+        else
+          echo '##vso[task.setvariable variable=next_version]'$NEXT_VER
+        fi
+      fi
+      echo '##vso[task.setvariable variable=update_status]'$UPDATE
+    # Set version no. as date <year>.<month>.<day>
+    # In a very rare case when SVO got updated >1 time in a day, don't publish back
+    # the updated data as artifact, since duplicate versions will conflict! 
+    # Despite of it, the data used from cache dir will always be up-to-date.
+    displayName: Update the filter data present in cache directory
+
+  # If data got updated, then only publish it back to feed so that next time  
+  # when filter data is accessed, we have relatively more up-to-date data (none 
+  # or less no. of filters to add/remove)
+  - task: UniversalPackages@0
+    inputs:
+      command: publish
+      publishDirectory: $(cache_dir)
+      vstsFeedPublish: 'cached_data'
+      vstsFeedPackagePublish: 'svo_filters'
+      versionOption: 'custom'
+      versionPublish: $(next_version)
+    condition: and(succeeded(), eq(variables['update_status'], 'True'))
+    displayName: If filter data got updated, publish it back as a newer versioned artifact
+
+  # Build the docs which will execute the notebooks before producing html
+  # by using the filter data we have made available at VM
   - bash: |
       source activate starkit
       bash azure_pipelines/deploy_docs.sh
