@@ -64,6 +64,7 @@ steps:
       $head = @{ Authorization = "Bearer $env:SYSTEM_ACCESSTOKEN" }
       $url = "https://feeds.dev.azure.com/starkit/_apis/packaging/Feeds/cached_data/packages/70d57642-6499-490f-ac9e-15bd85f93826?api-version=5.0-preview.1"
       $package = Invoke-RestMethod -Uri $url -Method Get -Headers $head -ContentType application/json
+      Write-Host "Fetched json (value of package) is $package"
       $latestVersion = ($package.versions.Where({ $_.isLatest -eq $True })).version
       Write-Host "The latest version is $latestVersion"
       Write-Host "##vso[task.setvariable variable=latest_version]$latestVersion"
