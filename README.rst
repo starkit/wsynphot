@@ -1,8 +1,12 @@
 Wsynphot
 ==========
+**CI Build:** |CI| **Docs:** |docs|
 
-.. image:: https://dev.azure.com/starkit/wsynphot/_apis/build/status/wsynphot-CI?branchName=master
-   :target: https://dev.azure.com/starkit/wsynphot/_build/latest?definitionId=1&branchName=master
+.. |CI| image:: https://dev.azure.com/starkit/wsynphot/_apis/build/status/wsynphot-CI?branchName=master
+   :target: https://dev.azure.com/starkit/wsynphot/_build/latest?definitionId=1&branchName=master 
+
+.. |docs| image:: https://dev.azure.com/starkit/wsynphot/_apis/build/status/wsynphot-docs-CD?branchName=master
+   :target: https://dev.azure.com/starkit/wsynphot/_build/latest?definitionId=3&branchName=master
 
 Installation
 -------------
