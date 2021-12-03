@@ -1,4 +1,5 @@
-import os, re
+import os
+import re
 import numpy as np
 import logging
 
@@ -6,8 +7,8 @@ import logging
 from tqdm.autonotebook import tqdm
 from astropy.io.votable import parse_single_table
 
-from wsynphot.io.get_filter_data import (get_filter_index,
-    get_transmission_data)
+from wsynphot.io.get_filter_data import (get_filter_index_in_batches,
+                                         get_transmission_data)
 from wsynphot.config import get_cache_dir, set_cache_updation_date
 
 CACHE_DIR = get_cache_dir()
@@ -45,10 +46,10 @@ def download_filter_data(cache_dir=CACHE_DIR):
         Path of the directory where downloaded data is to be cached 
     """
     # Get filter index and cache it
-    logger.info("Caching filter index ...")
-    index_table = get_filter_index().to_table()
+    logger.info("Caching filter index (in batches) ...")
+    index_table = get_filter_index_in_batches()
     cache_as_votable(index_table,
-        os.path.join(cache_dir, 'index'))
+                     os.path.join(cache_dir, 'index'))
     set_cache_updation_date()
 
     # Fetch filter_ids from index & download transmission data
@@ -74,8 +75,8 @@ def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
     svo_filter_id = '{0}/{1}.{2}'.format(facility, instrument, filter_name)
     filter_table = get_transmission_data(svo_filter_id).to_table()
 
-    cache_as_votable(filter_table, os.path.join(cache_dir, facility, 
-        instrument, filter_name))
+    cache_as_votable(filter_table, os.path.join(cache_dir, facility,
+                                                instrument, filter_name))
 
 
 def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
@@ -98,7 +99,7 @@ def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
 
     # Iterate over each filter_id and download transmission data
     for filter_id in filter_ids_pbar:
-        if isinstance(filter_id, bytes): # treat byte string
+        if isinstance(filter_id, bytes):  # treat byte string
             filter_id = filter_id.decode("utf-8")
 
         filter_ids_pbar.set_postfix_str(filter_id)
@@ -107,7 +108,7 @@ def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
             download_transmission_data(filter_id, cache_dir)
         except Exception as e:
             logger.error('Data for filter ID = {0} could not be downloaded '
-                'due to:\n{1}'.format(filter_id, e))
+                         'due to:\n{1}'.format(filter_id, e))
 
 
 def update_filter_data(cache_dir=CACHE_DIR):
@@ -118,7 +119,7 @@ def update_filter_data(cache_dir=CACHE_DIR):
     ----------
     cache_dir : str, optional
         Path of the directory where cached filter data is present 
-    
+
     Returns
     -------
     bool
@@ -128,10 +129,10 @@ def update_filter_data(cache_dir=CACHE_DIR):
     # Obtain all filter IDs from cache as old_filters
     old_index = load_filter_index(cache_dir)
     old_filters = old_index['filterID'].to_numpy()
-    
+
     # Obtain all filter IDs from SVO FPS as new_filters
-    logger.info("Fetching latest filter index ...")
-    new_index = get_filter_index().to_table()
+    logger.info("Fetching latest filter index (in batches) ...")
+    new_index = get_filter_index_in_batches()
     new_filters = np.array(new_index['filterID'], dtype=str)
 
     # Check whether there is need to update
@@ -146,11 +147,11 @@ def update_filter_data(cache_dir=CACHE_DIR):
     for filter_id in filters_to_remove:
         facility, instrument, filter_name = re.split('/|\.', filter_id)
         filter_file = os.path.join(cache_dir, facility, instrument,
-        '{0}.vot'.format(filter_name))
+                                   '{0}.vot'.format(filter_name))
         if os.path.exists(filter_file):
             os.remove(filter_file)
     remove_empty_dirs(cache_dir)
-    
+
     # Iterate & download (new_filters - old_filters) into cache
     filters_to_add = np.setdiff1d(new_filters, old_filters)
     logger.info("Caching new filters ...")
@@ -177,12 +178,12 @@ def load_filter_index(cache_dir=CACHE_DIR):
         Filter index loaded as a dataframe
     """
     filter_index_loc = os.path.join(cache_dir, 'index.vot')
-    
+
     # When no index votable is present
     if not os.path.exists(filter_index_loc):
         raise IOError('Filter index does not exist in the cache directory: '
-            '{0}\nMake sure you have already downloaded filter data by using '
-            'download_filter_data()'.format(cache_dir))
+                      '{0}\nMake sure you have already downloaded filter data by using '
+                      'download_filter_data()'.format(cache_dir))
 
     return df_from_votable(filter_index_loc)
 
@@ -207,7 +208,7 @@ def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
     """
     facility, instrument, filter_name = re.split('/|\.', filter_id)
     transmission_data_loc = os.path.join(cache_dir, facility, instrument,
-        '{0}.vot'.format(filter_name))
+                                         '{0}.vot'.format(filter_name))
 
     # When no such filter votable is present
     if not os.path.exists(transmission_data_loc):
@@ -216,15 +217,15 @@ def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
         svo_filter_id = '{0}/{1}.{2}'.format(facility, instrument, filter_name)
         if svo_filter_id in index['filterID'].values:
             raise IOError('Requested filter ID: {0} exists in index, but its '
-                'transmission data is missing in the cache directory: {1}\n'
-                'Make sure you have downloaded complete filter data by using '
-                'download_filter_data(). Or if you specifically want to '
-                'download transmission data for only requested filter ID, '
-                'use download_transmission_data()'.format(filter_id, 
-                    cache_dir))
+                          'transmission data is missing in the cache directory: {1}\n'
+                          'Make sure you have downloaded complete filter data by using '
+                          'download_filter_data(). Or if you specifically want to '
+                          'download transmission data for only requested filter ID, '
+                          'use download_transmission_data()'.format(filter_id,
+                                                                    cache_dir))
         else:
             raise ValueError('Requested filter ID: {0} does not '
-                'exists'.format(filter_id))
+                             'exists'.format(filter_id))
 
     return df_from_votable(transmission_data_loc)
 
@@ -255,14 +256,14 @@ def byte_to_literal_strings(dataframe):
     """
     # Select the str columns:
     str_df = dataframe.select_dtypes([np.object])
-    
+
     if not str_df.empty:
         # Convert all of them into unicode strings
         str_df = str_df.stack().str.decode('utf-8').unstack()
         # Swap out converted cols with the original df cols
         for col in str_df:
             dataframe[col] = str_df[col]
-    
+
     return dataframe
 
 
@@ -271,5 +272,5 @@ def remove_empty_dirs(root_dir):
     for root, dirs, files in os.walk(root_dir, topdown=False):
         for dirname in dirs:
             dirpath = os.path.join(root, dirname)
-            if not os.listdir(dirpath): # check whether the dir is empty
+            if not os.listdir(dirpath):  # check whether the dir is empty
                 os.rmdir(dirpath)
