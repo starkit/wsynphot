@@ -81,7 +81,7 @@ class BaseFilterCurve(object):
     """
 
     @classmethod
-    def load_filter(cls, filter_id=None, interpolation_kind='linear'):
+    def load_filter(cls, filter_id=None, interpolation_kind='linear', vega_fpath=None):
         """
 
         Parameters
@@ -92,7 +92,9 @@ class BaseFilterCurve(object):
 
         interpolation_kind: str
             see scipy.interpolation.interp1d
-            
+        
+        vega_fpath: str, optional
+            Path of Vega calibration file to be used for calculating vega magnitudes
         """
         if filter_id is None:
             return list_filters()
@@ -106,11 +108,11 @@ class BaseFilterCurve(object):
 
             return cls(wavelength, filter['Transmission'].values,
                        interpolation_kind=interpolation_kind,
-                       filter_id=filter_id)
+                       filter_id=filter_id, vega_fpath=vega_fpath)
 
 
     def __init__(self, wavelength, transmission_lambda,
-                 interpolation_kind='linear', filter_id=None):
+                 interpolation_kind='linear', filter_id=None, vega_fpath=None):
         if not hasattr(wavelength, 'unit'):
             raise ValueError('the wavelength needs to be a astropy quantity')
         self.wavelength = wavelength
@@ -122,6 +124,7 @@ class BaseFilterCurve(object):
                                                          bounds_error=False,
                                                          fill_value=0.0)
         self.filter_id = filter_id
+        self.vega_fpath = vega_fpath
 
 
     def __mul__(self, other):
@@ -176,8 +179,9 @@ class BaseFilterCurve(object):
 
     @utils.lazyproperty
     def zp_vega_f_lambda(self):
-        return (calculate_filter_flux_density(get_vega_calibration_spectrum(), self) /
-                self.calculate_wavelength_delta())
+        return (calculate_filter_flux_density(
+            get_vega_calibration_spectrum(self.vega_fpath), self
+        ) / self.calculate_wavelength_delta())
 
 
     def interpolate(self, wavelength):
@@ -307,16 +311,20 @@ class FilterSet(object):
     interpolation_kind: ~str
         scipy interpolaton kinds
 
+    vega_fpath: str, optional
+        Path of Vega calibration file to be used for calculating vega magnitudes
+
     """
-    def __init__(self, filter_set, interpolation_kind='linear'):
+
+    def __init__(self, filter_set, interpolation_kind='linear', vega_fpath=None):
 
         if hasattr(filter_set[0], 'wavelength'):
             self.filter_set = filter_set
         else:
             self.filter_set = [FilterCurve.load_filter(filter_id,
-                                              interpolation_kind=
-                                              interpolation_kind)
-                      for filter_id in filter_set]
+                                                       interpolation_kind=interpolation_kind,
+                                                       vega_fpath=vega_fpath)
+                               for filter_id in filter_set]
 
 
 
