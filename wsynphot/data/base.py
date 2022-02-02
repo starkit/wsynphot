@@ -14,7 +14,7 @@ ALPHA_LYR_FNAME = 'alpha_lyr_mod_002.fits'
 
 ALPHA_LYR_PATH = os.path.join(get_calibration_dir(), ALPHA_LYR_FNAME)
 
-ALPHA_LYR_MOD_URL= "ftp://ftp.stsci.edu/cdbs/calspec/{0}".format(
+ALPHA_LYR_MOD_URL = "https://archive.stsci.edu/hlsps/reference-atlases/cdbs/calspec/{0}".format(
     ALPHA_LYR_FNAME)
 
 
