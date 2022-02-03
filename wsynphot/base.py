@@ -1,11 +1,11 @@
 # defining the base filter curve classes
 
 import os
-
+import logging
 from scipy import interpolate
 from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
 import pandas as pd
-from wsynphot.io.cache_filters import load_filter_index, load_transmission_data
+from wsynphot.io.cache_filters import DetectorType, load_local_filters_index, load_transmission_data
 
 
 
@@ -14,7 +14,7 @@ from astropy import units as u, constants as const
 from astropy import utils
 import numpy as np
 from wsynphot.calibration import get_vega_calibration_spectrum
-
+logger = logging.getLogger(__name__)
 
 def calculate_filter_flux_density(spectrum, filter):
     """
@@ -34,8 +34,13 @@ def calculate_filter_flux_density(spectrum, filter):
     """
 
     filtered_spectrum = filter * spectrum
-    filter_flux_density = np.trapz(filtered_spectrum.flux * filtered_spectrum.wavelength,
+    if filter.detector_type == DetectorType.PHOTON_COUNTER:
+        filter_flux_density = np.trapz(filtered_spectrum.flux * filtered_spectrum.wavelength,
                     filtered_spectrum.wavelength)
+    else:  # DetectorType.ENERGY_COUNTER
+        filter_flux_density = np.trapz(filtered_spectrum.flux,
+                                       filtered_spectrum.wavelength)
+
     return filter_flux_density
 
 
@@ -58,9 +63,12 @@ def calculate_ab_magnitude(spectrum, filter):
 
 def list_filters():
     """
-    List available filter sets along with their properties
+    List available filters
     """
-    return load_filter_index()
+    logger.info("Following filters present in your cache directory are "
+                "available to use (to see all filters you can download from "
+                "SVO, use wsynphot.io.cache_filters.load_svo_filters_index()):")
+    return pd.Series(load_local_filters_index(), name="Filter ID")
 
 
 class BaseFilterCurve(object):
@@ -81,7 +89,7 @@ class BaseFilterCurve(object):
     """
 
     @classmethod
-    def load_filter(cls, filter_id=None, interpolation_kind='linear'):
+    def load_filter(cls, filter_id=None, interpolation_kind='linear', vega_fpath=None):
         """
 
         Parameters
@@ -92,29 +100,32 @@ class BaseFilterCurve(object):
 
         interpolation_kind: str
             see scipy.interpolation.interp1d
-            
+        
+        vega_fpath: str, optional
+            Path of Vega calibration file to be used for calculating vega magnitudes
         """
         if filter_id is None:
             return list_filters()
 
         else:
-            filter = load_transmission_data(filter_id)
+            transmission_data, detector_type = load_transmission_data(
+                filter_id)
             
             wavelength_unit = 'angstrom'
 
-            wavelength = filter['Wavelength'].values * u.Unit(wavelength_unit)
+            wavelength = transmission_data['Wavelength'].values * u.Unit(wavelength_unit)
 
-            return cls(wavelength, filter['Transmission'].values,
+            return cls(wavelength, transmission_data['Transmission'].values, detector_type,
                        interpolation_kind=interpolation_kind,
-                       filter_id=filter_id)
+                       filter_id=filter_id, vega_fpath=vega_fpath)
 
-
-    def __init__(self, wavelength, transmission_lambda,
-                 interpolation_kind='linear', filter_id=None):
+    def __init__(self, wavelength, transmission_lambda, detector_type,
+                 interpolation_kind='linear', filter_id=None, vega_fpath=None):
         if not hasattr(wavelength, 'unit'):
             raise ValueError('the wavelength needs to be a astropy quantity')
         self.wavelength = wavelength
         self.transmission_lambda = transmission_lambda
+        self.detector_type = detector_type
 
         self.interpolation_object = interpolate.interp1d(self.wavelength,
                                                          self.transmission_lambda,
@@ -122,6 +133,7 @@ class BaseFilterCurve(object):
                                                          bounds_error=False,
                                                          fill_value=0.0)
         self.filter_id = filter_id
+        self.vega_fpath = vega_fpath
 
 
     def __mul__(self, other):
@@ -142,7 +154,8 @@ class BaseFilterCurve(object):
     @utils.lazyproperty
     def lambda_pivot(self):
         """
-        Calculate the pivotal wavelength as defined in Bessell & Murphy 2012
+        Calculate the pivotal wavelength as defined as equation A16 in 
+        Bessell & Murphy 2012 (https://arxiv.org/abs/1112.2698)
 
         .. math::
 
@@ -150,9 +163,18 @@ class BaseFilterCurve(object):
             \\frac{\\int S(\\lambda)\\lambda d\\lambda}{\\int \\frac{S(\\lambda)}{\\lambda}}}\\\\
             <f_\\nu> = <f_\\lambda>\\frac{\\lambda_\\textrm{pivot}^2}{c}
         """
-
-        return np.sqrt((np.trapz(self.transmission_lambda * self.wavelength, self.wavelength)/
-                (np.trapz(self.transmission_lambda / self.wavelength, self.wavelength))))
+        if self.detector_type == DetectorType.PHOTON_COUNTER:
+            return np.sqrt(
+                np.trapz(self.transmission_lambda * self.wavelength, self.wavelength)/
+                np.trapz(self.transmission_lambda / self.wavelength, self.wavelength)
+                )
+        else:  # DetectorType.ENERGY_COUNTER
+            # substituting eq A9 in eq A16
+            return np.sqrt(
+                np.trapz(self.transmission_lambda, self.wavelength)/
+                np.trapz(self.transmission_lambda / (self.wavelength**2), self.wavelength)
+                )
+        
 
     @utils.lazyproperty
     def wavelength_start(self):
@@ -176,8 +198,9 @@ class BaseFilterCurve(object):
 
     @utils.lazyproperty
     def zp_vega_f_lambda(self):
-        return (calculate_filter_flux_density(get_vega_calibration_spectrum(), self) /
-                self.calculate_wavelength_delta())
+        return (calculate_filter_flux_density(
+            get_vega_calibration_spectrum(self.vega_fpath), self
+        ) / self.calculate_wavelength_delta())
 
 
     def interpolate(self, wavelength):
@@ -211,13 +234,19 @@ class BaseFilterCurve(object):
         Calculate the Integral :math:`\integral
         :return:
         """
-
-        return np.trapz(self.transmission_lambda * self.wavelength,
-                        self.wavelength)
+        if self.detector_type == DetectorType.PHOTON_COUNTER:
+            return np.trapz(self.transmission_lambda * self.wavelength,
+                            self.wavelength)
+        else:  # DetectorType.ENERGY_COUNTER
+            return np.trapz(self.transmission_lambda,
+                            self.wavelength)
 
     def calculate_weighted_average_wavelength(self):
         """
-        Calculate integral :math:`\\frac{\\int S(\\lambda) \\lambda d\\lambda}{\\int S(\\lambda) d\\lambda}`
+        Calculate integral defined as equation A14 in Bessell & Murphy 2012 
+        (https://arxiv.org/abs/1112.2698)
+        
+        :math:`\\frac{\\int S(\\lambda) \\lambda d\\lambda}{\\int S(\\lambda) d\\lambda}`
 
 
         Returns
@@ -225,9 +254,14 @@ class BaseFilterCurve(object):
 
 
         """
-
-        return (np.trapz(self.transmission_lambda * self.wavelength,
-                         self.wavelength) / self.calculate_wavelength_delta())
+        if self.detector_type == DetectorType.PHOTON_COUNTER:
+            return (self.calculate_wavelength_delta() /
+                    np.trapz(self.transmission_lambda, self.wavelength))
+        else:  # DetectorType.ENERGY_COUNTER
+            # substituting eq A9 in eq A14
+            return (self.calculate_wavelength_delta() /
+                    np.trapz(self.transmission_lambda / self.wavelength, self.wavelength))
+        
 
     def calculate_vega_magnitude(self, spectrum):
         __doc__ = calculate_vega_magnitude.__doc__
@@ -307,16 +341,20 @@ class FilterSet(object):
     interpolation_kind: ~str
         scipy interpolaton kinds
 
+    vega_fpath: str, optional
+        Path of Vega calibration file to be used for calculating vega magnitudes
+
     """
-    def __init__(self, filter_set, interpolation_kind='linear'):
+
+    def __init__(self, filter_set, interpolation_kind='linear', vega_fpath=None):
 
         if hasattr(filter_set[0], 'wavelength'):
             self.filter_set = filter_set
         else:
             self.filter_set = [FilterCurve.load_filter(filter_id,
-                                              interpolation_kind=
-                                              interpolation_kind)
-                      for filter_id in filter_set]
+                                                       interpolation_kind=interpolation_kind,
+                                                       vega_fpath=vega_fpath)
+                               for filter_id in filter_set]
 
 
 

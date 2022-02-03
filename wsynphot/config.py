@@ -73,17 +73,12 @@ def get_cache_updation_date():
     """
     config = get_configuration()
     cache_updation_date_text = config.get('cache_updation_date', None)
-    cache_dir = get_cache_dir()
 
     # Check whether date is present
     if cache_updation_date_text is None:
-        if os.listdir(cache_dir):
-            cache_updation_date = rectify_cache_updation_date(config,
-                'No date present, even when cache exists')
-        else:  # When cache is not downloaded/updated atleast once
-            cache_updation_date = None
+        cache_updation_date = None
 
-    else:
+    else: # Only when complete filter data was downloaded
         try:
             cache_updation_date = datetime.strptime(cache_updation_date_text, 
                 '%Y-%m-%d').date()
@@ -125,7 +120,7 @@ def rectify_cache_updation_date(config, error_log):
         '\n'.format(line_stars='*'*80, error_text=error_log))
 
     index_modification_timestamp = os.path.getmtime(os.path.join(get_cache_dir(),
-        'index.vot'))
+        'svo_index.vot'))
     cache_updation_date = datetime.fromtimestamp(index_modification_timestamp).date()
     config['cache_updation_date'] = str(cache_updation_date)
     yaml.dump(config, open(CONFIG_FPATH, 'w'), default_flow_style=False)

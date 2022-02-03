@@ -52,14 +52,15 @@ def data_from_svo(query, error_msg='No data found for requested query'):
 
     Returns
     -------
-    astropy.io.votable.tree.Table object
-        Table element of the VOTable fetched from SVO (in response to query)
+    astropy.io.votable.tree.VOTableFile object
+        Entire VOTable fetched from SVO (in response to query)
     """
     response = session.get(SVO_MAIN_URL, params=query)
     response.raise_for_status()
     votable = io.BytesIO(response.content)
     try:
-        return parse_single_table(votable)
+        parse_single_table(votable)
+        return parse(votable) # to keep metadata stored as PARAMS
     except IndexError:
         # If no table element found in VOTable
         raise ValueError(error_msg)
@@ -80,8 +81,8 @@ def get_filter_index(wavelength_eff_min=0, wavelength_eff_max=FLOAT_MAX):
 
     Returns
     -------
-    astropy.io.votable.tree.Table object
-        Table element of the VOTable fetched from SVO (in response to query)
+    astropy.io.votable.tree.VOTableFile object
+        Entire VOTable fetched from SVO (in response to query)
     """
     wavelength_eff_min = u.Quantity(wavelength_eff_min, u.angstrom)
     wavelength_eff_max = u.Quantity(wavelength_eff_max, u.angstrom)
@@ -126,7 +127,7 @@ def get_filter_index_in_batches(n_batches=25):
         error_msg = f'No filter found for Wavelength Eff. range: {wavelength_eff_bins[i]:.2f} - {wavelength_eff_bins[i+1]:.2f}'
 
         try:
-            data_fetched = data_from_svo(query, error_msg).to_table()
+            data_fetched = data_from_svo(query, error_msg).get_first_table().to_table()
             if i == 0:
                 data = data_fetched
             else:
@@ -155,8 +156,8 @@ def get_transmission_data(filter_id):
 
     Returns
     -------
-    astropy.io.votable.tree.Table object
-        Table element of the VOTable fetched from SVO (in response to query)
+    astropy.io.votable.tree.VOTableFile object
+        Entire VOTable fetched from SVO (in response to query)
     """
     query = {'ID': filter_id}
     error_msg = 'No filter found for requested Filter ID'
@@ -176,8 +177,8 @@ def get_filter_list(facility, instrument=None):
 
     Returns
     -------
-    astropy.io.votable.tree.Table object
-        Table element of the VOTable fetched from SVO (in response to query)
+    astropy.io.votable.tree.VOTableFile object
+        Entire VOTable fetched from SVO (in response to query)
     """
     query = {'Facility': facility,
              'Instrument': instrument}
