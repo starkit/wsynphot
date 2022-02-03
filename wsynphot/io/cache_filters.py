@@ -3,6 +3,7 @@ import re
 import numpy as np
 import logging
 from enum import IntEnum
+from glob import glob
 
 # tqdm.autonotebook automatically chooses between console & notebook
 from tqdm.autonotebook import tqdm
@@ -21,25 +22,58 @@ class DetectorType(IntEnum):
     PHOTON_COUNTER = 1
 
 
-def download_filter_data(cache_dir=CACHE_DIR):
-    """Downloads the entire filter data (filter index and transmission data 
-    of each filter) locally on disk as cache.
+def download_filter_data(filter_ids=None, cache_dir=CACHE_DIR):
+    """Downloads the transmission data of each filter passed, locally on disk as 
+    cache. If filter_ids not specified, it will download transmission data of all
+    filters (~10k+) available at SVO.
+
+    Parameters
+    ----------
+    filter_ids: iterable
+        Iterable object containing Filter IDs as str in either wsynphot format: 
+        'facilty/instrument/filter' or SVO format: 'facilty/instrument.filter' 
+        (Can use '/' and '.' interchangeably as delimiters)
+    cache_dir : str, optional
+        Path of the directory where downloaded data is to be cached
+    
+    Returns
+    -------
+    list of str
+        List of filter IDs for which data could not be downloaded 
+    """
+    download_all_mode = False
+
+    if filter_ids is None:
+        download_all_mode = True
+        logger.info("Fetching index of all filters at SVO (in batches) ...")
+        download_svo_filters_index(cache_dir)
+
+        svo_filters_index = load_svo_filters_index(cache_dir)
+        filter_ids = svo_filters_index["filterID"]
+
+    # Download transmission data for each filter
+    logger.info("Caching transmission data ...")
+    failed_filter_ids = iterative_download_transmission_data(
+        filter_ids, cache_dir)
+
+    if download_all_mode and len(failed_filter_ids) == 0:
+        # Save in config that all filter are up-to-date
+        set_cache_updation_date()
+
+    return failed_filter_ids
+
+
+def download_svo_filters_index(cache_dir=CACHE_DIR):
+    """Downloads index of all filters present at SVO in the cache.
 
     Parameters
     ----------
     cache_dir : str, optional
         Path of the directory where downloaded data is to be cached 
     """
-    # Get filter index and cache it
-    logger.info("Caching filter index (in batches) ...")
     index_table = get_filter_index_in_batches()
-    fpath = os.path.join(cache_dir, 'index.vot')
+    fpath = os.path.join(cache_dir, 'svo_index.vot')
     index_table.write(fpath, format='votable', overwrite=True)
-    set_cache_updation_date()
-
-    # Fetch filter_ids from index & download transmission data
-    logger.info("Caching transmission data ...")
-    iterative_download_transmission_data(index_table['filterID'], cache_dir)
 
 
 def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
@@ -65,8 +99,6 @@ def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
         os.makedirs(dir_path)
 
     filter_votable.to_xml(os.path.join(dir_path, f"{filter_name}.vot"))
-    # TODO: Save the entry to index.vot (with params also?),
-    # don't save index in download_transmission_data
 
 
 def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
@@ -82,10 +114,16 @@ def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
         'facilty/instrument/filter' or SVO format: 'facilty/instrument.filter' 
         (Can use '/' and '.' interchangeably as delimiters)
     cache_dir : str, optional
-        Path of the directory where downloaded data is to be cached 
+        Path of the directory where downloaded data is to be cached
+
+    Returns
+    -------
+    list of str
+        List of filter IDs for which data could not be downloaded 
     """
     # Decorate the iterator with progress bar
     filter_ids_pbar = tqdm(filter_ids, desc='Filter ID', total=len(filter_ids))
+    failed_filter_ids = []
 
     # Iterate over each filter_id and download transmission data
     for filter_id in filter_ids_pbar:
@@ -97,13 +135,19 @@ def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
         try:
             download_transmission_data(filter_id, cache_dir)
         except Exception as e:
+            failed_filter_ids.append(filter_id)
             logger.error('Data for filter ID = {0} could not be downloaded '
                          'due to:\n{1}'.format(filter_id, e))
 
+    return failed_filter_ids
+
 
 def update_filter_data(cache_dir=CACHE_DIR):
-    """Updates the cached filter data (filter index and transmission data) 
-    by downloading new filters & removing outdated filters.
+    """Makes the cached filter data same as SVO by downloading new filters 
+    & removing outdated filters. 
+    
+    You need not to use this if you only want to keep limited number of
+    filters of your choice (over all filters i.e. ~10k+) in the cache.
 
     Parameters
     ----------
@@ -117,13 +161,14 @@ def update_filter_data(cache_dir=CACHE_DIR):
         already up-to-date
     """
     # Obtain all filter IDs from cache as old_filters
-    old_index = load_filter_index(cache_dir)
-    old_filters = old_index['filterID'].to_numpy()
+    old_index = load_local_filters_index(cache_dir)
+    old_filters = np.array(old_index)
 
     # Obtain all filter IDs from SVO FPS as new_filters
-    logger.info("Fetching latest filter index (in batches) ...")
-    new_index = get_filter_index_in_batches()
-    new_filters = np.array(new_index['filterID'], dtype=str)
+    logger.info("Fetching latest index of all filters at SVO (in batches) ...")
+    download_svo_filters_index(cache_dir)
+    new_index = load_svo_filters_index(cache_dir)
+    new_filters = new_index["filterID"].to_numpy()
 
     # Check whether there is need to update
     if np.array_equal(old_filters, new_filters):
@@ -147,15 +192,36 @@ def update_filter_data(cache_dir=CACHE_DIR):
     logger.info("Caching new filters ...")
     iterative_download_transmission_data(filters_to_add, cache_dir)
 
-    # Overwrite new index in cache
-    fpath = os.path.join(cache_dir, 'index.vot')
-    new_index.write(fpath, format='votable', overwrite=True)
+    # Save in config that all filters were updated successfully
     set_cache_updation_date()
     return True
 
 
-def load_filter_index(cache_dir=CACHE_DIR):
-    """Loads filter index from the cached filter data present on disk as a
+def load_local_filters_index(cache_dir=CACHE_DIR):
+    """Loads index of all filters present on disk.
+
+    Parameters
+    ----------
+    cache_dir : str, optional
+        Path of the directory where downloaded data was cached 
+
+    Returns
+    -------
+    list of str
+        Filter IDs of filters present in the cache
+    """
+    # create index from all filters present in cache (over reading from a file)
+    # so that index is always in sync with what is present on disk
+    local_filters_index = [os.path.splitext(os.path.relpath(path, cache_dir))[0]
+                           for path in glob(f"{cache_dir}/*/*/*.vot")]
+
+    # TODO: Return a dataframe consisting of filter id and filter properties
+    # (by reading params from filters' votable files)
+    return local_filters_index
+
+
+def load_svo_filters_index(cache_dir=CACHE_DIR):
+    """Loads index of all filters at SVO if present on disk, as a
     pandas dataframe.
 
     Parameters
@@ -168,20 +234,20 @@ def load_filter_index(cache_dir=CACHE_DIR):
     pandas.core.frame.DataFrame
         Filter index loaded as a dataframe
     """
-    filter_index_loc = os.path.join(cache_dir, 'index.vot')
+    svo_filter_index_loc = os.path.join(cache_dir, 'svo_index.vot')
 
     # When no index votable is present
-    if not os.path.exists(filter_index_loc):
-        raise IOError('Filter index does not exist in the cache directory: '
-                      '{0}\nMake sure you have already downloaded filter data by using '
-                      'download_filter_data()'.format(cache_dir))
+    if not os.path.exists(svo_filter_index_loc):
+        raise IOError('SVO filter index does not exist in the cache directory: '
+                      '{0}\nMake sure you have already downloaded it by using '
+                      'wsynphot.io.cache_filters.download_svo_filters_index()'.format(cache_dir))
 
-    return df_from_votable(filter_index_loc)
+    return df_from_votable(svo_filter_index_loc)
 
 
 def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
-    """Loads transmission data for requested Filter ID from the cached filter 
-    data present on disk as a pandas dataframe.
+    """Loads transmission data (and metadata) of the requested filter from the 
+    cached filter data present on disk.
 
     Parameters
     ----------
@@ -206,20 +272,9 @@ def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
 
     # When no such filter votable is present
     if not os.path.exists(transmission_data_loc):
-        index = load_filter_index(cache_dir)
-        # Check whether filter_id is present in index
-        svo_filter_id = '{0}/{1}.{2}'.format(facility, instrument, filter_name)
-        if svo_filter_id in index['filterID'].values:
-            raise IOError('Requested filter ID: {0} exists in index, but its '
-                          'transmission data is missing in the cache directory: {1}\n'
-                          'Make sure you have downloaded complete filter data by using '
-                          'download_filter_data(). Or if you specifically want to '
-                          'download transmission data for only requested filter ID, '
-                          'use download_transmission_data()'.format(filter_id,
-                                                                    cache_dir))
-        else:
-            raise ValueError('Requested filter ID: {0} does not '
-                             'exists'.format(filter_id))
+        raise IOError("No data found in the cache directory ({0}) for the "
+                      "requested filter ID: {1}. Use download_transmission_data() "
+                      "to download it to the cache.".format(cache_dir, filter_id))
 
     transmission_df = df_from_votable(transmission_data_loc)
     detector_type = detector_type_from_votable(transmission_data_loc)

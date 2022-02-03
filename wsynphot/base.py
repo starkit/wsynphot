@@ -1,11 +1,11 @@
 # defining the base filter curve classes
 
 import os
-
+import logging
 from scipy import interpolate
 from wsynphot.spectrum1d import SKSpectrum1D as Spectrum1D
 import pandas as pd
-from wsynphot.io.cache_filters import DetectorType, load_filter_index, load_transmission_data
+from wsynphot.io.cache_filters import DetectorType, load_local_filters_index, load_transmission_data
 
 
 
@@ -14,7 +14,7 @@ from astropy import units as u, constants as const
 from astropy import utils
 import numpy as np
 from wsynphot.calibration import get_vega_calibration_spectrum
-
+logger = logging.getLogger(__name__)
 
 def calculate_filter_flux_density(spectrum, filter):
     """
@@ -63,9 +63,12 @@ def calculate_ab_magnitude(spectrum, filter):
 
 def list_filters():
     """
-    List available filter sets along with their properties
+    List available filters
     """
-    return load_filter_index()
+    logger.info("Following filters present in your cache directory are "
+                "available to use (to see all filters you can download from "
+                "SVO, use wsynphot.io.cache_filters.load_svo_filters_index()):")
+    return pd.Series(load_local_filters_index(), name="Filter ID")
 
 
 class BaseFilterCurve(object):
