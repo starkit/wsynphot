@@ -2,10 +2,11 @@ import os
 import re
 import numpy as np
 import logging
+from enum import IntEnum
 
 # tqdm.autonotebook automatically chooses between console & notebook
 from tqdm.autonotebook import tqdm
-from astropy.io.votable import parse_single_table
+from astropy.io.votable import parse, parse_single_table
 
 from wsynphot.io.get_filter_data import (get_filter_index_in_batches,
                                          get_transmission_data)
@@ -15,25 +16,9 @@ CACHE_DIR = get_cache_dir()
 logger = logging.getLogger(__name__)
 
 
-def cache_as_votable(table, file_path):
-    """Caches the passed table on disk as a VOTable.
-
-    Parameters
-    ----------
-    table : astropy.table.Table
-        Table to be cached 
-    file_path : str
-        Path where VOTable is to be saved 
-    """
-    if not file_path.endswith('.vot'):
-        file_path += '.vot'
-
-    dir_path = os.path.dirname(file_path)
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-
-    # Write table as votable (overwrite for cases when file already exists)
-    table.write(file_path, format='votable', overwrite=True)
+class DetectorType(IntEnum):
+    ENERGY_COUNTER = 0
+    PHOTON_COUNTER = 1
 
 
 def download_filter_data(cache_dir=CACHE_DIR):
@@ -48,8 +33,8 @@ def download_filter_data(cache_dir=CACHE_DIR):
     # Get filter index and cache it
     logger.info("Caching filter index (in batches) ...")
     index_table = get_filter_index_in_batches()
-    cache_as_votable(index_table,
-                     os.path.join(cache_dir, 'index'))
+    fpath = os.path.join(cache_dir, 'index.vot')
+    index_table.write(fpath, format='votable', overwrite=True)
     set_cache_updation_date()
 
     # Fetch filter_ids from index & download transmission data
@@ -73,10 +58,15 @@ def download_transmission_data(filter_id, cache_dir=CACHE_DIR):
     facility, instrument, filter_name = re.split('/|\.', filter_id)
     # Convert filter_id in SVO format to get transmission data from SVO
     svo_filter_id = '{0}/{1}.{2}'.format(facility, instrument, filter_name)
-    filter_table = get_transmission_data(svo_filter_id).to_table()
+    filter_votable = get_transmission_data(svo_filter_id)
 
-    cache_as_votable(filter_table, os.path.join(cache_dir, facility,
-                                                instrument, filter_name))
+    dir_path = os.path.join(cache_dir, facility, instrument)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    filter_votable.to_xml(os.path.join(dir_path, f"{filter_name}.vot"))
+    # TODO: Save the entry to index.vot (with params also?),
+    # don't save index in download_transmission_data
 
 
 def iterative_download_transmission_data(filter_ids, cache_dir=CACHE_DIR):
@@ -158,7 +148,8 @@ def update_filter_data(cache_dir=CACHE_DIR):
     iterative_download_transmission_data(filters_to_add, cache_dir)
 
     # Overwrite new index in cache
-    cache_as_votable(new_index, os.path.join(cache_dir, 'index'))
+    fpath = os.path.join(cache_dir, 'index.vot')
+    new_index.write(fpath, format='votable', overwrite=True)
     set_cache_updation_date()
     return True
 
@@ -205,6 +196,9 @@ def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
     -------
     pandas.core.frame.DataFrame
         Filter's transmission data loaded as a dataframe
+
+    DetectorType(Enum)
+        Filter's detector type: energy counter or photon counter
     """
     facility, instrument, filter_name = re.split('/|\.', filter_id)
     transmission_data_loc = os.path.join(cache_dir, facility, instrument,
@@ -227,7 +221,10 @@ def load_transmission_data(filter_id, cache_dir=CACHE_DIR):
             raise ValueError('Requested filter ID: {0} does not '
                              'exists'.format(filter_id))
 
-    return df_from_votable(transmission_data_loc)
+    transmission_df = df_from_votable(transmission_data_loc)
+    detector_type = detector_type_from_votable(transmission_data_loc)
+
+    return transmission_df, detector_type
 
 
 def df_from_votable(votable_path):
@@ -274,3 +271,21 @@ def remove_empty_dirs(root_dir):
             dirpath = os.path.join(root, dirname)
             if not os.listdir(dirpath):  # check whether the dir is empty
                 os.rmdir(dirpath)
+
+
+def detector_type_from_votable(votable_path):
+    """Parses the passed VOTable to fetch detector type.
+
+    Parameters
+    ----------
+    votable_path : str
+        Path where VOTable to be used is stored. Make sure passed VOTable is 
+        properly formatted, since this is "not" a general purpose function.
+
+    Returns
+    -------
+    DetectorType(IntEnum)
+    """
+    votable = parse(votable_path)
+    detector_type = votable.get_field_by_id("DetectorType").value
+    return DetectorType(int(detector_type))
